@@ -105,14 +105,22 @@ commodity-watch, should-cost-analytics, vave-ideation, parts-commonization,
 orchestrator, savings-ledger. As each returns, read out one concrete thing it
 found (a should-cost gap, a VAVE idea, a commonization pair).
 
+After EVERY agent the terminal pauses on `Sign off on <agent>'s finding?
+[y/N]` — no agent is exempt, including the Super Agents. Answer it out loud
+as you type: sign off on most, and reject at least one, so the recording
+shows the gate can say no. The run closes with a sign-off record ("4/6 agent
+findings carry a human signature") — read that line out; it is the point of
+the whole tier model.
+
 If you would rather show them one at a time, run them individually instead:
 ```
 python cli.py --agent should-cost-analytics
 python cli.py --agent vave-ideation
 python cli.py --agent parts-commonization
 ```
-Each agent reads data/part_master.csv (and its own file) — so if one ever says
-the data is missing, the data/ folder wasn't shipped; check it's present.
+These prompt for the same sign-off after the agent's output. Each agent reads
+data/part_master.csv (and its own file) — so if one ever says the data is
+missing, the data/ folder wasn't shipped; check it's present.
 
 ### Step 4 — Close
 Say: "From a closed gate and zero dollars, to a routed, human-signed number —
