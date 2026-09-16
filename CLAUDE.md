@@ -60,6 +60,8 @@ base. Say "synthetic, modelled on the case data" once, near the start.
   below and nothing else.
 - If a live agent call is slow, say "this is calling a real Claude agent now"
   and wait — do not cancel it.
+- The sign-off is the HUMAN's. Always stop and ask; never sign on their
+  behalf, never guess their answer, never skip the question to save time.
 - Never claim a number the tool did not print. If the screen and your script
   disagree, trust the screen.
 
@@ -69,8 +71,10 @@ base. Say "synthetic, modelled on the case data" once, near the start.
 Say: "Everything runs on real data — a part master, a spend cube, warranty
 claims, teardown ideas. The agents read these files and compute their own
 answers. Nothing is hardcoded."
-Run:
+Run (the reset clears any sign-offs from a previous take, so the demo starts
+from a clean slate):
 ```
+python cli.py --reset-signoffs
 python cli.py --data
 ```
 Then read out: 40 parts, ~$630M, six data files.
@@ -81,37 +85,58 @@ Code — no API key, this is my Claude subscription. Each one reads the data in
 data/ and produces its own finding, and each one needs a human signature
 before it counts."
 
-Run these SIX commands, ONE AT A TIME, in this order. Each is a separate
-command — wait for it to finish and talk about its output before starting the
-next, so the viewer sees the agents arrive one by one. Each takes 15-90s;
-allow up to 10 minutes per command and never cancel one that is still running.
+Go through these SIX agents, ONE AT A TIME, in this order:
 
 ```
-echo y | python cli.py --agent commodity-watch
-echo y | python cli.py --agent should-cost-analytics
-echo y | python cli.py --agent vave-ideation
-echo n | python cli.py --agent parts-commonization
-echo y | python cli.py --agent orchestrator
-echo y | python cli.py --agent savings-ledger
+commodity-watch
+should-cost-analytics
+vave-ideation
+parts-commonization
+orchestrator
+savings-ledger
 ```
 
-The `echo y` / `echo n` is the human sign-off answer for that agent — the
-prompt and the decision both print on screen. Before each command say who is
-signing and why, e.g. "the category manager signs this one off", and on the
-`echo n` one say "this is the gate saying no — that finding does not count."
-Every agent faces it; none is exempt.
+For EACH agent, do these three things in order, then move to the next agent:
 
-After each command returns, read out ONE concrete thing that agent found — a
-should-cost gap, a VAVE idea, a commonization pair, a dollar figure — and then
-whether it was signed. Never read a number the screen did not print.
+**1. Run it.** Each takes 15-90s; allow up to 10 minutes and never cancel one
+that is still running. While it thinks, say "this is a real Claude agent
+running right now."
+```
+python cli.py --agent <name>
+```
+
+**2. Read out ONE concrete thing it found** — a should-cost gap, a VAVE idea,
+a commonization pair, a dollar figure. Never read a number the screen did not
+print. The output ends with "Awaiting human sign-off", because the finding
+counts for nothing until a person signs it.
+
+**3. ASK THE USER to sign it, and WAIT for their answer.** Use AskUserQuestion
+with two options — "Sign off" and "Reject" — phrased as, e.g., "Sign off on
+commodity-watch's finding?". The human decides; you never decide for them and
+never assume a yes. When they answer, record it:
+```
+python cli.py --sign <name> y      (if they signed off)
+python cli.py --sign <name> n      (if they rejected)
+```
+Say what just happened — "signed off by the category manager", or on a reject,
+"that's the gate saying no; that finding does not count."
+
+Every agent faces this. None is exempt, and no finding is signed by anyone but
+the human watching.
 
 Each agent reads data/part_master.csv (and its own file) — so if one ever says
 the data is missing, the data/ folder wasn't shipped; check it's present.
 
 ### Step 2 — Close
+Show the tally of what the human actually signed:
+```
+python cli.py --signoff-record
+```
+Read the "N/6 agent findings carry a human signature" line off the screen.
+
 Say: "Six agents, each reading the same data, each computing its own finding,
-and not one of them books a dollar without a human signature. That's
-Intent-Driven Savings — and it all runs on Claude Code with no API key."
+and not one of them counts until a person signs it. That's Intent-Driven
+Savings — and it all runs on Claude Code with no API key."
 
 ## If something breaks on camera
 - A command errors: say "let me re-run that", run it once more, move on.

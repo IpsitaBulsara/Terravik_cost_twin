@@ -176,6 +176,44 @@ def sign_loop(state):
 AGENT_PROMPTS = core.AGENT_PROMPTS
 
 
+SIGNOFF_LOG = core._os.path.join(core._os.path.dirname(core._os.path.abspath(__file__)),
+                                 "signoff_log.csv")
+
+
+def record_sign_off(agent_name, approved):
+    """
+    Record a human's sign-off decision on a live agent finding, and show it on
+    screen. Kept in a file so the decision survives between the separate
+    commands that run the agent and sign it.
+    """
+    import csv
+    new = not core._os.path.exists(SIGNOFF_LOG)
+    with open(SIGNOFF_LOG, "a", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        if new:
+            w.writerow(["agent", "decision"])
+        w.writerow([agent_name, "signed" if approved else "rejected"])
+    verdict = f"{C.G}SIGNED OFF{C.END}" if approved else f"{C.R}REJECTED{C.END}"
+    print(f"\n  Human sign-off on {C.BOLD}{agent_name}{C.END}'s finding: {verdict}")
+    print(f"  {C.DIM}recorded in signoff_log.csv{C.END}\n")
+
+
+def show_signoff_record():
+    import csv
+    if not core._os.path.exists(SIGNOFF_LOG):
+        print(f"{C.Y}No sign-offs recorded yet.{C.END}\n")
+        return
+    with open(SIGNOFF_LOG, encoding="utf-8", newline="") as f:
+        rows = list(csv.DictReader(f))
+    print(f"{C.BOLD}Human sign-off record{C.END}")
+    for r in rows:
+        ok = r["decision"] == "signed"
+        print(f"  {(C.G + '[x] signed  ' if ok else C.R + '[ ] rejected')}{C.END} {r['agent']}")
+    n = sum(1 for r in rows if r["decision"] == "signed")
+    print(f"\n  {C.BOLD}{n}/{len(rows)}{C.END} agent findings carry a human signature.")
+    print(f"  {C.DIM}Nothing books without one  -  green = sign-off, every tier.{C.END}\n")
+
+
 def prompt_sign_off(agent_name):
     """
     The trust rule applied to a live agent finding. No agent is exempt.
@@ -294,9 +332,32 @@ def main():
     ap.add_argument("--agent", metavar="NAME")
     ap.add_argument("--all-agents", action="store_true", help="run every agent in sequence, printing each one's output")
     ap.add_argument("--data", action="store_true", help="show a summary of the synthetic data foundation")
+    ap.add_argument("--sign", nargs=2, metavar=("AGENT", "Y_OR_N"),
+                    help="record a human's sign-off on an agent's finding, e.g. --sign vave-ideation y")
+    ap.add_argument("--signoff-record", action="store_true", help="show every sign-off decision so far")
+    ap.add_argument("--reset-signoffs", action="store_true", help="clear the sign-off record for a clean run")
     args = ap.parse_args()
 
     state = core.RoadmapState()
+
+    if args.reset_signoffs:
+        if core._os.path.exists(SIGNOFF_LOG):
+            core._os.remove(SIGNOFF_LOG)
+        print(f"{C.G}Sign-off record cleared.{C.END}\n")
+        sys.exit(0)
+
+    if args.signoff_record:
+        show_signoff_record()
+        sys.exit(0)
+
+    if args.sign:
+        name, decision = args.sign[0], args.sign[1].strip().lower()
+        if name not in AGENT_PROMPTS:
+            print(f"Unknown agent. Options: {', '.join(AGENT_PROMPTS)}"); sys.exit(1)
+        if decision not in ("y", "n", "yes", "no"):
+            print(f"Answer must be y or n, got {args.sign[1]!r}"); sys.exit(1)
+        record_sign_off(name, decision.startswith("y"))
+        sys.exit(0)
 
     if args.data:
         banner()
@@ -332,8 +393,9 @@ def main():
         ok, out = core.call_agent(prompt, needs_web=web)
         print(out)
         if ok:
-            print()
-            prompt_sign_off(args.agent)
+            print(f"\n  {C.Y}{C.BOLD}Awaiting human sign-off{C.END}  {C.DIM}-  this finding "
+                  f"counts for nothing until a person signs it.{C.END}")
+            print(f"  {C.DIM}Sign it with:  python cli.py --sign {args.agent} y|n{C.END}\n")
         sys.exit(0 if ok else 1)
 
     if args.run:

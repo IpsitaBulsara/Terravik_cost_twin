@@ -136,6 +136,9 @@ def call_agent(instruction, needs_web=False, timeout=150):
             ["claude", "-p", instruction, "--allowedTools", allowed],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=timeout, cwd=os.path.dirname(os.path.abspath(__file__)),
+            # Without this the child inherits our stdin and swallows whatever
+            # the caller was going to answer the sign-off prompt with.
+            stdin=subprocess.DEVNULL,
         )
         if r.returncode != 0:
             return False, f"Claude Code error:\n{(r.stderr or '').strip()}"
