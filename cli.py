@@ -15,6 +15,16 @@ import argparse
 import sys
 import core
 
+# Live agent output contains arrows, box-drawing and currency glyphs. On a
+# console whose default encoding is cp1252 (Windows) printing those raises
+# UnicodeEncodeError mid-table, so force UTF-8 and degrade unmappable
+# characters instead of crashing the demo.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
 
 class C:
     P = "\033[95m"; B = "\033[94m"; G = "\033[92m"; Y = "\033[93m"
@@ -166,8 +176,22 @@ def sign_loop(state):
 AGENT_PROMPTS = core.AGENT_PROMPTS
 
 
+def prompt_sign_off(agent_name):
+    """The trust rule applied to a live agent finding. No agent is exempt."""
+    if not sys.stdin.isatty():
+        print(f"  {C.Y}No terminal to sign with  -  {agent_name}'s finding stays unsigned.{C.END}")
+        return False
+    ans = input(f"  Sign off on {agent_name}'s finding? [y/N] ").strip().lower()
+    ok = ans == "y"
+    print(f"  -> {(C.G + 'signed off' if ok else C.R + 'rejected')}{C.END}\n")
+    return ok
+
+
 def call_all_agents():
-    print(f"{C.BOLD}Agent-by-agent demo  -  each subagent runs live, one at a time{C.END}\n")
+    print(f"{C.BOLD}Agent-by-agent demo  -  each subagent runs live, one at a time{C.END}")
+    print(f"{C.DIM}  Green = sign-off, every tier: no agent's finding carries forward "
+          f"without a human signature.{C.END}\n")
+    signed = []
 
     def announce(name):
         print(f"{C.P}{C.BOLD}=== {name} ==={C.END}")
@@ -176,8 +200,16 @@ def call_all_agents():
     def show(result):
         print(result.output if result.ok else f"{C.R}{result.output}{C.END}")
         print()
+        # Every agent faces the same gate  -  Super Agent, Utility or Human-led.
+        signed.append((result.name, prompt_sign_off(result.name)))
 
     core.run_all_agents(on_start=announce, on_done=show)
+
+    print(f"{C.BOLD}Sign-off record{C.END}")
+    for name, ok in signed:
+        print(f"  {(C.G + '[x] signed  ' if ok else C.R + '[ ] rejected')}{C.END} {name}")
+    print(f"\n  {len([1 for _, ok in signed if ok])}/{len(signed)} agent findings carry "
+          f"a human signature.\n")
 
 
 def call_one_agent():
@@ -192,6 +224,8 @@ def call_one_agent():
     print(f"{C.DIM}  Calling {name}... 15-90s{C.END}")
     ok, out = core.call_agent(prompt, needs_web=web)
     print("\n" + (out if ok else f"{C.R}{out}{C.END}") + "\n")
+    if ok:
+        prompt_sign_off(name)
 
 
 def interactive(state):
@@ -287,7 +321,11 @@ def main():
             print(f"Unknown agent. Options: {', '.join(AGENT_PROMPTS)}"); sys.exit(1)
         prompt, web = AGENT_PROMPTS[args.agent]
         ok, out = core.call_agent(prompt, needs_web=web)
-        print(out); sys.exit(0 if ok else 1)
+        print(out)
+        if ok:
+            print()
+            prompt_sign_off(args.agent)
+        sys.exit(0 if ok else 1)
 
     if args.run:
         banner()
