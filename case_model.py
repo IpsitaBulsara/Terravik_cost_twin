@@ -50,6 +50,17 @@ AI_TRIAGE_MULTIPLIER = 2.0
 FAST_LANE_MULTIPLIER = 3.0
 
 
+def bases():
+    """
+    The case's addressable base: direct materials + indirect. The R&D operating
+    model is the third lever but it is capacity (~180 FTEs), not a spend base,
+    so it carries no dollars here.
+    """
+    direct = sum(float(r["annual_spend_usd"]) for r in _rows("category_rates.csv"))
+    indirect = sum(float(r["base_spend_usd"]) for r in _rows("indirect_opportunities.csv"))
+    return direct, indirect, direct + indirect
+
+
 def _rows(name):
     path = os.path.join(DATA, name)
     if not os.path.exists(path):

@@ -312,6 +312,17 @@ def show_plan():
     M = 1e6
     comm, scens = cm.scenarios()
     target = core.TARGET_ANNUAL_SAVING
+    direct, indirect, base = cm.bases()
+
+    print(f"{C.BOLD}The addressable base{C.END}")
+    print(f"  Direct materials   ${direct/M:>6.0f}M   {C.DIM}6 categories, 40 parts "
+          f"in the part master{C.END}")
+    print(f"  Indirect spend     ${indirect/M:>6.0f}M   {C.DIM}freight, packaging, travel, "
+          f"facilities{C.END}")
+    print(f"  R&D operating model{'':>8}   {C.DIM}~180 FTEs  -  capacity, not a spend "
+          f"base{C.END}")
+    print(f"  {C.BOLD}Addressable base   ${base/M:>6.0f}M{C.END}   {C.DIM}target ${target}M/yr "
+          f"= {target*M/base*100:.1f}% of it  -  the case's 5-7%{C.END}\n")
 
     print(f"{C.P}{C.BOLD}PRESSURE 1  -  Commodity shock{C.END}")
     print(f"{C.DIM}  A commodity move raises part cost by (index move x material share).")
@@ -378,14 +389,15 @@ def show_plan():
           f"{rec.gap/M:.1f} million.{C.END}\n")
 
     ind_mid, ind_rows = cm.indirect_achievable()
-    base = sum(float(r["base_spend_usd"]) for r in ind_rows)
+    named = [r for r in ind_rows if float(r["opportunity_hi_usd"]) > 0]
+    named_base = sum(float(r["base_spend_usd"]) for r in named)
     print(f"{C.BOLD}Where this is deliberately conservative{C.END}")
-    print(f"  Indirect is built bottom-up from {len(ind_rows)} named opportunities "
-          f"(${base/M:.1f}M of spend -> ${ind_mid/M:.2f}M).")
-    print(f"  The case also gives a top-down 3-5% on the full ~$100M of indirect, which "
-          f"would be $3.0-5.0M")
-    print(f"  {C.DIM}-  $0.5-2.5M more than counted above. Upside, deliberately left "
-          f"out of the recommendation.{C.END}\n")
+    print(f"  Indirect is built bottom-up from {len(named)} named opportunities "
+          f"(${named_base/M:.1f}M of the ${indirect/M:.0f}M -> ${ind_mid/M:.2f}M).")
+    print(f"  The case also gives a top-down 3-5% across the whole ${indirect/M:.0f}M, "
+          f"which would be ${indirect*0.03/M:.1f}-{indirect*0.05/M:.1f}M")
+    print(f"  {C.DIM}-  up to ${(indirect*0.05 - ind_mid)/M:.1f}M more than counted above. "
+          f"Upside, deliberately left out.{C.END}\n")
 
     print(f"{C.BOLD}Keep / accelerate / drop{C.END}")
     for tag, colour, items in [
@@ -564,13 +576,13 @@ def main():
         banner()
         import csv, os
         files = [
-            ("part_master.csv", "parts across 6 categories, ~$630M/yr"),
+            ("part_master.csv", "direct materials: 6 categories, ~$630M/yr"),
             ("spend_cube.csv", "spend by supplier x category"),
             ("warranty_claims.csv", "warranty claim groups by part"),
             ("teardown_ideas.csv", "raw VAVE ideas from competitor teardowns"),
             ("commodity_prices.csv", "steel/rubber/alloy price indices"),
             ("category_rates.csv", "the case's own commercial + VAVE % per category"),
-            ("indirect_opportunities.csv", "freight, packaging, travel, facilities"),
+            ("indirect_opportunities.csv", "indirect: ~$100M/yr, freight to facilities"),
             ("savings_ledger.csv", "booked savings (starts empty)"),
         ]
         print(f"{C.BOLD}Synthetic data foundation (in data/){C.END}\n")

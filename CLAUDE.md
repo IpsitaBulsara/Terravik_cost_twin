@@ -20,7 +20,7 @@ terminal app only — it is the cleanest thing to record.
 The model, in one breath: six specialist agents each read the same data and
 compute their own finding, an Orchestrator routes ideas to the right lever by
 trust type, and nothing counts until a human signs it — green = sign-off,
-every tier, against a $36.5M/yr target.
+every tier, against a $36.5M/yr target on a ~$730M addressable base.
 
 ## The 6 agents (in `.claude/agents/`)
 
@@ -70,21 +70,22 @@ base. Say "synthetic, modelled on the case data" once, near the start.
 ## RUN SEQUENCE
 
 ### Step 0 — Show the data the agents read
-Say: "Everything runs on real data — a part master, a spend cube, warranty
-claims, teardown ideas. The agents read these files and compute their own
-answers. Nothing is hardcoded."
+Say: "Terravik's addressable base is about $730M a year — $630M of direct
+materials plus roughly $100M of indirect — and the board wants 5 to 7% of it,
+about $36.5M a year. Everything here runs on that real data: a part master, a
+spend cube, warranty claims, teardown ideas. The agents read these files and
+compute their own answers. Nothing is hardcoded."
 Run (the reset empties the ledger and clears any decisions from a previous
 take, so the demo starts from a clean slate):
 ```
 python cli.py --reset-demo
 python cli.py --data
 ```
-Then read out: 40 parts, ~$630M of DIRECT MATERIALS, and the data files.
+Then read out: 40 parts covering the $630M of direct materials, and the files.
 
-Say "$630M of direct materials" — never "a $630M base". The case's addressable
-base is ~$730M: $630M direct materials + ~$100M indirect + the R&D operating
-model. The $36.5M target is 5% of $730M, not of $630M. If you say $630M and a
-judge divides, they get 5.8% and think your maths is off.
+Always frame the base as **$730M**, and $630M as the direct-materials slice of
+it. The $36.5M target is 5% of $730M. If you call $630M "the base" and a judge
+divides, they get 5.8% and think your maths is off.
 
 ### Step 1 — Show the agents thinking for real, one at a time
 Say: "These aren't hard-coded. Here are the real agents running live on Claude
