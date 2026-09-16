@@ -305,6 +305,108 @@ def prompt_sign_off(agent_name):
     return ok
 
 
+def show_plan():
+    """The recomputed plan against the Grand Finale twist."""
+    import case_model as cm
+
+    M = 1e6
+    comm, scens = cm.scenarios()
+    target = core.TARGET_ANNUAL_SAVING
+
+    print(f"{C.P}{C.BOLD}PRESSURE 1  -  Commodity shock{C.END}")
+    print(f"{C.DIM}  A commodity move raises part cost by (index move x material share).")
+    print(f"  Where that exceeds the negotiated saving, the saving is gone.{C.END}\n")
+    print(f"  {'Category':<34}{'planned':>9}{'cost up':>9}{'survives':>10}")
+    for r in comm.rows:
+        colour = C.R if r["surviving"] == 0 else C.G
+        print(f"  {r['category']:<34}{r['planned']/M:>8.1f}M{r['cost_up_pct']*100:>8.0f}%"
+              f"{colour}{r['surviving']/M:>9.1f}M{C.END}")
+    print(f"  {C.BOLD}{'Commercial saving':<34}{comm.planned/M:>8.1f}M"
+          f"{'':>9}{C.R}{comm.surviving/M:>9.1f}M{C.END}")
+    print(f"  {C.R}${comm.evaporated/M:.1f}M/yr of negotiated saving evaporated"
+          f"  -  {comm.evaporated/(target*M)*100:.0f}% of the whole target.{C.END}\n")
+
+    lb = cm.load_bearing_share()
+    cats = cm.categories()
+    tot = sum(c["spend"] for c in cats)
+    lb_share = sum(c["spend"] * lb.get(c["category"], 0) for c in cats) / tot
+    print(f"{C.P}{C.BOLD}PRESSURE 2  -  Trust shock{C.END}")
+    print(f"{C.DIM}  The failed change was on a load-bearing part, so engineering now"
+          f" signs every idea.{C.END}")
+    print(f"  {C.BOLD}{lb_share*100:.0f}%{C.END} of direct-material spend "
+          f"({C.BOLD}${tot*lb_share/M:.0f}M{C.END} of ${tot/M:.0f}M) sits on load-bearing parts.")
+    print(f"  {C.DIM}That is the spend that now queues behind the validation bench.{C.END}\n")
+
+    print(f"{C.P}{C.BOLD}PRESSURE 3  -  {core.NEW_TIMELINE_MONTHS} months, not "
+          f"{core.ORIGINAL_TIMELINE_MONTHS}{C.END}")
+    print(f"{C.DIM}  Run-rate by the deadline, so an idea must be validated "
+          f"{cm.IMPLEMENTATION_LAG_MONTHS} months early to count.{C.END}\n")
+
+    print(f"{C.BOLD}What is actually achievable{C.END}")
+    print(f"  {'Scenario':<50}{'comm':>7}{'VAVE':>8}{'indir':>7}{'total':>9}{'of target':>11}")
+    for s in scens:
+        pct = s.pct_of_target
+        colour = C.G if pct >= 95 else (C.Y if pct >= 75 else C.R)
+        print(f"  {s.name:<50}{s.commercial/M:>6.1f}M{s.vave/M:>7.1f}M{s.indirect/M:>6.1f}M"
+              f"{colour}{s.total/M:>8.1f}M{pct:>10.0f}%{C.END}")
+        print(f"  {C.DIM}{'':<4}{s.note}{C.END}")
+        if s.integrity_risk:
+            print(f"  {C.R}{'':<4}RISK: {s.integrity_risk}{C.END}")
+    print()
+
+    rec = scens[2]
+    print(f"{C.BOLD}The binding constraint{C.END}")
+    print(f"  S1: {scens[1].vave_detail.binding}  -  only "
+          f"{C.BOLD}{scens[1].vave_detail.ideas_possible}{C.END} of "
+          f"{scens[1].vave_detail.ideas_needed} feasible ideas clear the bench in time.")
+    print(f"  S2: {rec.vave_detail.binding}  -  AI triage clears the queue, so the "
+          f"limit moves off the bench")
+    print(f"      and onto how much VAVE the categories hold at the case's own rates.")
+    print(f"  {C.DIM}${rec.vave_detail.avg_saving_per_idea/1000:.0f}k average saving per "
+          f"implemented idea.{C.END}\n")
+
+    print(f"{C.BOLD}Recommendation{C.END}")
+    print(f"  Commit to {C.G}{C.BOLD}S2: ${rec.total/M:.1f}M/yr run-rate "
+          f"({rec.pct_of_target:.0f}% of ${target}M){C.END} by month "
+          f"{core.NEW_TIMELINE_MONTHS}, and book the")
+    print(f"  remaining {C.BOLD}${rec.gap/M:.1f}M/yr{C.END} into months "
+          f"{core.NEW_TIMELINE_MONTHS + 1}-{core.ORIGINAL_TIMELINE_MONTHS} rather than "
+          f"buying it with load-bearing risk.")
+    print(f"  {C.DIM}S3 reaches the number on paper, but only by making the exact class "
+          f"of change{C.END}")
+    print(f"  {C.DIM}that already failed in the field. That trade is not worth "
+          f"{rec.gap/M:.1f} million.{C.END}\n")
+
+    print(f"{C.BOLD}Keep / accelerate / drop{C.END}")
+    for tag, colour, items in [
+        ("KEEP      ", C.G, [
+            "VAVE on castings and forgings  -  biggest structural pool, 5-10%",
+            "engineering sign-off on every load-bearing change  -  non-negotiable",
+        ]),
+        ("ACCELERATE", C.Y, [
+            "indirect: freight contracting, packaging, travel  -  no bench queue",
+            "AI triage + a non-load-bearing fast lane  -  lifts bench throughput",
+            "commonization and spec discipline  -  durable, survives commodity moves",
+        ]),
+        ("DROP      ", C.R, [
+            "counting commercial negotiation toward the target  -  it evaporated",
+            "AI-initiated changes to load-bearing parts  -  this caused the failure",
+        ]),
+    ]:
+        for i, it in enumerate(items):
+            print(f"  {colour}{tag if i == 0 else '          '}{C.END} {it}")
+    print()
+    print(f"{C.DIM}  Assumptions (challenge these, not the case figures):{C.END}")
+    for k, why in cm.ASSUMPTIONS.items():
+        val = {"material_share": "per category, in category_rates.csv",
+               "ideas_per_engineer_month": cm.IDEAS_PER_ENGINEER_MONTH,
+               "implementation_lag_months": cm.IMPLEMENTATION_LAG_MONTHS,
+               "feasible_idea_pool": cm.FEASIBLE_IDEA_POOL,
+               "ai_triage_multiplier": cm.AI_TRIAGE_MULTIPLIER}[k]
+        print(f"{C.DIM}    {k} = {val}  -  {why}{C.END}")
+    print()
+
+
 def call_all_agents():
     print(f"{C.BOLD}Agent-by-agent demo  -  each subagent runs live, one at a time{C.END}")
     print(f"{C.DIM}  Green = sign-off, every tier: no agent's finding carries forward "
@@ -409,6 +511,8 @@ def main():
                     help="$M/yr the approved finding is worth; booked into the ledger on a 'y'")
     ap.add_argument("--signoff-record", action="store_true", help="show every sign-off decision so far")
     ap.add_argument("--ledger", action="store_true", help="show the cost ledger of approved savings")
+    ap.add_argument("--plan", action="store_true",
+                    help="recompute what is achievable against the Grand Finale twist")
     ap.add_argument("--reset-demo", action="store_true", help="clear sign-offs and empty the ledger for a clean run")
     args = ap.parse_args()
 
@@ -421,6 +525,11 @@ def main():
         with open(LEDGER, "w", encoding="utf-8", newline="") as f:
             csv.writer(f).writerow(LEDGER_HEADER)
         print(f"{C.G}Clean slate  -  sign-offs cleared, cost ledger emptied.{C.END}\n")
+        sys.exit(0)
+
+    if args.plan:
+        banner()
+        show_plan()
         sys.exit(0)
 
     if args.ledger:
@@ -450,6 +559,8 @@ def main():
             ("warranty_claims.csv", "warranty claim groups by part"),
             ("teardown_ideas.csv", "raw VAVE ideas from competitor teardowns"),
             ("commodity_prices.csv", "steel/rubber/alloy price indices"),
+            ("category_rates.csv", "the case's own commercial + VAVE % per category"),
+            ("indirect_opportunities.csv", "freight, packaging, travel, facilities"),
             ("savings_ledger.csv", "booked savings (starts empty)"),
         ]
         print(f"{C.BOLD}Synthetic data foundation (in data/){C.END}\n")

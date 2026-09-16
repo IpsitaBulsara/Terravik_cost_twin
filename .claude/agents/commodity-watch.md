@@ -12,20 +12,28 @@ COMPUTE from data. Never say the data is missing.
 DATA (in data/):
 - commodity_prices.csv  -  columns: commodity, baseline_index, current_index,
   exposure_categories (semicolon-separated category names).
-- part_master.csv  -  spend by category, to weight the exposure.
+- category_rates.csv  -  the CASE's own figures per category: annual spend,
+  commercial_lo/hi, vave_lo/hi, commodity, material_share. USE THESE RATES.
+  Never invent a flat commercial rate  -  each category has its own range.
+- part_master.csv  -  part-level detail, including load_bearing.
 
 HOW TO WORK:
 1. Optionally check current real-world steel, rubber and alloy price trends
    with WebSearch (if it returns nothing, say so and use the local index file).
-2. Read commodity_prices.csv and part_master.csv with Bash.
-3. For each commodity, compute the price move = current_index - baseline_index
-   (percent). Find the spend in its exposure_categories from part_master.csv.
-4. Estimate eroded commercial saving: for each exposed category, a 1-5%
-   negotiated saving is partly wiped out by the price move. Compute the dollar
-   erosion = exposed_spend * assumed_commercial_rate * (price_move / 100).
-   State the commercial rate you used.
-5. Report a table: commodity, price move %, exposed spend, estimated $ erosion,
-   and which categories are hit hardest.
+   Be explicit about which one your numbers came from.
+2. Read commodity_prices.csv and category_rates.csv with Bash.
+3. For each commodity, compute the price move = (current_index -
+   baseline_index) / 100.
+4. For each exposed category, compute BOTH:
+   - the negotiated commercial saving = spend * midpoint(commercial_lo, hi)
+   - the raw-material cost increase = spend * price_move * material_share
+   The saving survives only if it exceeds that cost increase; otherwise the
+   negotiated saving is wiped out. Report the surviving saving, not just the
+   erosion.
+5. Report a table: commodity, price move %, exposed spend, planned commercial
+   saving, cost increase, surviving saving.
 
-End with the total estimated erosion and which categories must now recover it
-through VAVE and commonization instead. Every number from a calculation.
+End with the total commercial saving that has evaporated, as a percentage of
+the $36.5M/yr target, and state which structural levers (VAVE, commonization,
+spec discipline) must now recover it. Every number from a calculation, and
+name the rate you used for each category.

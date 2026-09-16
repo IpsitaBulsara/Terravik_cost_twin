@@ -1,0 +1,7 @@
+category,annual_spend_usd,commercial_lo,commercial_hi,vave_lo,vave_hi,commodity,material_share,main_risk
+Proprietary systems & assemblies,300000000,0.01,0.03,0.02,0.04,Alloy,0.50,supplier dependency; IP
+Castings,120000000,0.03,0.05,0.05,0.08,Steel,0.55,tooling; durability
+Forgings & alloy-steel parts,85000000,0.03,0.05,0.05,0.10,Steel,0.60,fatigue testing; qualification
+Tyres,60000000,0.02,0.03,0.00,0.02,Rubber,0.45,supplier concentration
+Gears & shafts,50000000,0.02,0.04,0.03,0.05,Steel,0.55,tolerance; heat-treat quality
+Other components,15000000,0.02,0.05,0.03,0.08,Alloy,0.40,fragmented tail spend

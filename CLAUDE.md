@@ -158,6 +158,17 @@ Say: "Six agents, each reading the same data, each computing its own finding —
 and the only things in that ledger are the ones a human said yes to. That's
 Intent-Driven Savings, and it all runs on Claude Code with no API key."
 
+### Step 3 — OPTIONAL: the answer to the Grand Finale twist
+Only run this if the user asks for it, or if a judge asks "so what's your
+actual recommendation?". It is analysis, not an agent, and it is instant.
+```
+python cli.py --plan
+```
+It recomputes the case against all three pressures — commodity shock, trust
+shock, deadline shock — and lands on a recommendation. Read out: the $17.7M of
+commercial saving that evaporated, that 71% of direct-material spend is
+load-bearing, and the recommended S2 number against the $36.5M target.
+
 ## If something breaks on camera
 - A command errors: say "let me re-run that", run it once more, move on.
 - One agent hangs or fails: the others already made the point. Sign off on
