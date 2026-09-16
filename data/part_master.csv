@@ -1,0 +1,41 @@
+part_id,category,description,model_fit,supplier,supplier_country,material,unit_cost_usd,should_cost_usd,annual_volume,annual_spend_usd,load_bearing,single_source,last_price_change_mo
+P-1001,Proprietary systems & assemblies,Front loader linkage assembly,"X,Y",SUP-H,China,Alloy steel,1240,1216.38,49470,61342800,true,true,30
+P-1002,Proprietary systems & assemblies,PTO shaft assembly,"X,Y,Z",SUP-H,China,Alloy steel,860,842.53,50866,43744760,true,false,8
+P-1003,Proprietary systems & assemblies,Hydraulic control valve block,"X,Z",SUP-C,China,Cast iron,510,497.45,61290,31257900,true,true,30
+P-1004,Proprietary systems & assemblies,Cab HVAC module,"X,Y,Z",SUP-K,China,Composite,390,382.51,94184,36731760,false,true,4
+P-1005,Proprietary systems & assemblies,Instrument cluster housing,"X,Y",SUP-H,China,ABS plastic,145,142.14,98919,14343255,false,false,6
+P-1006,Proprietary systems & assemblies,Electronic control unit,"X,Y,Z",SUP-B,India,PCB assembly,620,607.2,64307,39870340,false,true,2
+P-1007,Proprietary systems & assemblies,Steering column assembly,"X,Y",SUP-J,Germany,Alloy steel,430,423.16,44306,19051580,true,false,30
+P-1008,Proprietary systems & assemblies,Fuel injection manifold,Z,SUP-K,China,Aluminium,560,548.94,95816,53656960,true,true,2
+C-2001,Castings,Rear axle housing,"X,Y",SUP-I,India,Ductile iron,780,748.0,39453,30773340,true,false,2
+C-2002,Castings,Transmission case,"X,Y,Z",SUP-A,India,Cast iron,920,878.83,39588,36420960,true,false,8
+C-2003,Castings,Seat mounting frame,"X,Y,Z",SUP-J,Germany,Grey iron,95,92.26,51120,4856400,false,false,30
+C-2004,Castings,Front hitch bracket,"X,Y",SUP-F,Germany,Grey iron,110,106.31,43342,4767620,false,false,8
+C-2005,Castings,Steering knuckle,"X,Z",SUP-I,India,Ductile iron,340,330.24,28336,9634240,true,false,11
+C-2006,Castings,Engine mount bracket,"X,Y,Z",SUP-H,China,Grey iron,88,84.03,66637,5864056,false,false,4
+C-2007,Castings,Differential carrier,"X,Y",SUP-H,China,Ductile iron,410,392.58,49513,20300330,true,false,20
+C-2008,Castings,Wheel hub,"X,Y,Z",SUP-I,India,Ductile iron,165,160.45,44747,7383255,true,false,11
+F-3001,Forgings & alloy-steel parts,PTO shaft,"X,Y,Z",SUP-F,Germany,Alloy steel,410,390.62,96328,39494480,true,false,11
+F-3002,Forgings & alloy-steel parts,Rear hitch pin,"X,Y,Z",SUP-A,India,Carbon steel,64,61.0,77522,4961408,true,false,4
+F-3003,Forgings & alloy-steel parts,Steering linkage pin,"X,Y",SUP-G,India,Carbon steel,72,69.12,45511,3276792,true,false,11
+F-3004,Forgings & alloy-steel parts,Axle housing bolt M20,all,SUP-G,India,Grade 10.9 steel,6,5.76,98821,592926,true,false,2
+F-3005,Forgings & alloy-steel parts,Loader pivot pin,"X,Y",SUP-K,China,Alloy steel,58,56.31,63774,3698892,true,false,8
+F-3006,Forgings & alloy-steel parts,Drawbar clevis,"X,Y,Z",SUP-D,India,Carbon steel,49,47.73,48948,2398452,false,false,30
+F-3007,Forgings & alloy-steel parts,Connecting rod,Z,SUP-G,India,Forged steel,180,173.29,81369,14646420,true,true,20
+F-3008,Forgings & alloy-steel parts,Crankshaft,Z,SUP-B,India,Forged steel,340,330.83,46855,15930700,true,true,11
+T-4001,Tyres,Rear drive tyre 18.4R38,"X,Y",SUP-F,Germany,Rubber,410,400.07,35676,14627160,false,true,11
+T-4002,Tyres,Front steer tyre 12.4R24,"X,Y",SUP-F,Germany,Rubber,185,180.35,62354,11535490,false,true,20
+T-4003,Tyres,Rear drive tyre 20.8R42,Z,SUP-B,India,Rubber,520,508.89,31992,16635840,false,true,8
+T-4004,Tyres,Industrial tyre 16.9R28,Y,SUP-L,India,Rubber,295,286.42,58310,17201450,false,true,2
+G-5001,Gears & shafts,PTO gear set,"X,Y",SUP-A,India,Case-hardened steel,265,257.73,47987,12716555,true,false,30
+G-5002,Gears & shafts,Differential gear,"X,Y,Z",SUP-C,China,Case-hardened steel,310,299.36,32221,9988510,true,false,8
+G-5003,Gears & shafts,Transmission input shaft,"X,Y,Z",SUP-H,China,Alloy steel,190,184.53,53010,10071900,true,false,8
+G-5004,Gears & shafts,Idler gear,"X,Y",SUP-L,India,Alloy steel,72,69.78,29613,2132136,false,false,20
+G-5005,Gears & shafts,Bevel gear pair,"X,Z",SUP-K,China,Case-hardened steel,240,233.17,28248,6779520,true,false,4
+G-5006,Gears & shafts,Output shaft,"X,Y",SUP-G,India,Alloy steel,155,150.16,53623,8311565,true,false,8
+O-6001,Other components,Hood bracket,"X,Y,Z",SUP-A,India,Sheet steel,18,17.46,178658,3215844,false,false,11
+O-6002,Other components,Cab trim panel clip,all,SUP-A,India,Nylon,3,2.92,228457,685371,false,false,6
+O-6003,Other components,Cab door hinge,"X,Y,Z",SUP-G,India,Zinc alloy,14,13.44,166653,2333142,false,false,2
+O-6004,Other components,Hydraulic quick-connect fitting,"X,Y,Z",SUP-C,China,Brass,22,21.12,109514,2409308,true,false,30
+O-6005,Other components,Wiring harness clip,all,SUP-E,India,Nylon,2,1.93,187931,375862,false,false,14
+O-6006,Other components,Mudguard bracket,"X,Y",SUP-E,India,Sheet steel,26,25.1,230018,5980468,false,false,4

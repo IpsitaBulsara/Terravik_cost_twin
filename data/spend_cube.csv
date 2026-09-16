@@ -1,0 +1,30 @@
+supplier,supplier_country,category,annual_spend_usd,part_count,should_cost_gap_usd,tail_spend
+SUP-A,India,Castings,36420960,1,1629838,no
+SUP-A,India,Forgings & alloy-steel parts,4961408,1,232566,yes
+SUP-A,India,Gears & shafts,12716555,1,348865,no
+SUP-A,India,Other components,3901215,2,114752,yes
+SUP-B,India,Forgings & alloy-steel parts,15930700,1,429660,no
+SUP-B,India,Proprietary systems & assemblies,39870340,1,823130,no
+SUP-B,India,Tyres,16635840,1,355431,no
+SUP-C,China,Gears & shafts,9988510,1,342831,yes
+SUP-C,China,Other components,2409308,1,96372,yes
+SUP-C,China,Proprietary systems & assemblies,31257900,1,769190,no
+SUP-D,India,Forgings & alloy-steel parts,2398452,1,62164,yes
+SUP-E,India,Other components,6356330,2,220171,yes
+SUP-F,Germany,Castings,4767620,1,159932,yes
+SUP-F,Germany,Forgings & alloy-steel parts,39494480,1,1866837,no
+SUP-F,Germany,Tyres,26162650,2,644209,no
+SUP-G,India,Forgings & alloy-steel parts,18516138,3,700775,no
+SUP-G,India,Gears & shafts,8311565,1,259535,yes
+SUP-G,India,Other components,2333142,1,93326,yes
+SUP-H,China,Castings,26164386,2,1127065,no
+SUP-H,China,Gears & shafts,10071900,1,289965,no
+SUP-H,China,Proprietary systems & assemblies,119430815,3,2340019,no
+SUP-I,India,Castings,47790835,3,1742654,no
+SUP-J,Germany,Castings,4856400,1,140069,yes
+SUP-J,Germany,Proprietary systems & assemblies,19051580,1,303053,no
+SUP-K,China,Forgings & alloy-steel parts,3698892,1,107778,yes
+SUP-K,China,Gears & shafts,6779520,1,192934,yes
+SUP-K,China,Proprietary systems & assemblies,90388720,2,1765163,no
+SUP-L,India,Gears & shafts,2132136,1,65741,yes
+SUP-L,India,Tyres,17201450,1,500300,no

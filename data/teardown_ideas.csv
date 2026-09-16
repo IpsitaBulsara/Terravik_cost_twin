@@ -1,0 +1,23 @@
+idea_id,part_id,component,idea_type,idea_desc,load_bearing,raw_saving_usd,feasible
+T-1,G-5004,Idler gear,commonization,"reuse across models X,Y",false,105005,yes
+T-2,C-2008,Wheel hub,commonization,"reuse across models X,Y,Z",true,584969,yes
+T-3,F-3006,Drawbar clevis,part-count reduction,combine 3 parts into one,false,173434,needs-review
+T-4,O-6001,Hood bracket,part-count reduction,combine 2 parts into one,false,183589,yes
+T-5,C-2002,Transmission case,spec relaxation,loosen tolerance where duty allows,true,2690795,yes
+T-6,P-1007,Steering column assembly,material substitution,swap Alloy steel for a lower-grade equivalent,true,652278,yes
+T-7,T-4001,Rear drive tyre 18.4R38,commonization,"reuse across models X,Y",false,77537,needs-review
+T-8,C-2003,Seat mounting frame,weight reduction,hollow-section redesign to cut mass,false,252312,needs-review
+T-9,G-5001,PTO gear set,material substitution,swap Case-hardened steel for a lower-grade equivalent,true,533078,yes
+T-10,P-1002,PTO shaft assembly,spec relaxation,loosen tolerance where duty allows,true,1506820,yes
+T-11,G-5003,Transmission input shaft,spec relaxation,loosen tolerance where duty allows,true,425139,yes
+T-12,F-3005,Loader pivot pin,material substitution,swap Alloy steel for a lower-grade equivalent,true,319495,yes
+T-13,C-2006,Engine mount bracket,spec relaxation,loosen tolerance where duty allows,false,383342,yes
+T-14,C-2005,Steering knuckle,weight reduction,hollow-section redesign to cut mass,true,638621,yes
+T-15,P-1001,Front loader linkage assembly,weight reduction,hollow-section redesign to cut mass,true,1662395,needs-review
+T-16,P-1006,Electronic control unit,part-count reduction,combine 2 parts into one,false,1364063,yes
+T-17,P-1008,Fuel injection manifold,weight reduction,hollow-section redesign to cut mass,true,1884773,yes
+T-18,O-6004,Hydraulic quick-connect fitting,material substitution,swap Brass for a lower-grade equivalent,true,116503,needs-review
+T-19,T-4002,Front steer tyre 12.4R24,material substitution,swap Rubber for a lower-grade equivalent,false,41412,needs-review
+T-20,F-3008,Crankshaft,spec relaxation,loosen tolerance where duty allows,true,1217725,yes
+T-21,G-5002,Differential gear,spec relaxation,loosen tolerance where duty allows,true,477761,yes
+T-22,F-3002,Rear hitch pin,weight reduction,hollow-section redesign to cut mass,true,321142,needs-review

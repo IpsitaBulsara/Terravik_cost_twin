@@ -1,0 +1,14 @@
+claim_group_id,part_id,component,claims_12mo,avg_claim_cost_usd,annual_warranty_cost_usd,root_cause
+W-1001,P-1004,Cab HVAC module,22,768,16896,corrosion
+W-1002,P-1008,Fuel injection manifold,5,592,2960,fatigue
+W-1003,C-2003,Seat mounting frame,26,1160,30160,corrosion
+W-1004,C-2004,Front hitch bracket,24,1023,24552,corrosion
+W-1005,C-2006,Engine mount bracket,5,1346,6730,corrosion
+W-1006,F-3002,Rear hitch pin,101,895,90395,fatigue
+W-1007,F-3004,Axle housing bolt M20,44,1313,57772,fatigue
+W-1008,F-3005,Loader pivot pin,64,503,32192,fatigue
+W-1009,F-3008,Crankshaft,86,475,40850,fatigue
+W-1010,T-4001,Rear drive tyre 18.4R38,9,1232,11088,corrosion
+W-1011,G-5001,PTO gear set,58,219,12702,fatigue
+W-1012,G-5006,Output shaft,40,1250,50000,fatigue
+W-1013,O-6004,Hydraulic quick-connect fitting,17,1409,23953,fatigue
