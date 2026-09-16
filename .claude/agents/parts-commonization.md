@@ -25,9 +25,17 @@ HOW TO WORK:
 3. For each strong candidate pair, estimate the saving from consolidating to
    one part: roughly 3-6% of the combined annual_spend of the two parts (state
    the % you used).
-4. Rank the top candidates. For each, show: the two part_ids, similarity score,
-   load_bearing flag (yes if EITHER part is load-bearing), combined spend, and
-   estimated saving.
+4. Report EVERY candidate pair you found, ranked by estimated saving  -  one
+   complete table, not a top 5. For each, show: the two part_ids, category,
+   similarity score, load_bearing flag (yes if EITHER part is load-bearing),
+   combined spend, and estimated saving. State the similarity threshold you
+   used to call something a candidate.
+5. Finish with: the total estimated saving across all pairs, how many pairs
+   are load-bearing, and what those load-bearing pairs are worth  -  that is
+   the share that needs an engineer before any merge.
+
+Do not truncate to a "top N" unless the caller explicitly asks for one. The
+point of this agent is the full candidate list.
 
 End with one line: a high similarity score is not approval. Any load-bearing
 pair must go to an engineer before a merge. You score and rank; you never

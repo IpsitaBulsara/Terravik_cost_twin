@@ -238,25 +238,26 @@ def show_ledger():
           f"({pct}% of ${core.TARGET_ANNUAL_SAVING}M target)\n")
 
 
-def record_sign_off(agent_name, approved, saving_musd=0.0):
+def record_sign_off(agent_name, approved, saving_musd=0.0, part_id="-", label=""):
     """
     Record a human's decision on a live agent finding. Approved findings go
     into the cost ledger; rejected ones go nowhere. Kept in files so the
     decision survives between the separate commands that run and sign it.
     """
     import csv
+    what = label or part_id if (label or part_id != "-") else f"{agent_name}'s finding"
     new = not core._os.path.exists(SIGNOFF_LOG)
     with open(SIGNOFF_LOG, "a", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         if new:
-            w.writerow(["agent", "decision", "saving_musd"])
-        w.writerow([agent_name, "signed" if approved else "rejected",
+            w.writerow(["agent", "part_id", "label", "decision", "saving_musd"])
+        w.writerow([agent_name, part_id, label, "signed" if approved else "rejected",
                     saving_musd if approved else 0.0])
 
     if approved:
-        print(f"\n  {C.G}{C.BOLD}APPROVED{C.END}  {agent_name}'s finding, signed by a human.")
+        print(f"\n  {C.G}{C.BOLD}APPROVED{C.END}  {what} ({agent_name}), signed by a human.")
         if saving_musd > 0:
-            bid = book_to_ledger(agent_name, saving_musd)
+            bid = book_to_ledger(agent_name, saving_musd, part_id)
             print(f"  -> booked into the cost ledger as {C.BOLD}{bid}{C.END}, "
                   f"{C.G}{C.BOLD}${saving_musd:.1f}M/yr{C.END}")
             total = sum(float(r["saving_usd_yr"]) for r in ledger_rows()) / 1_000_000
@@ -265,7 +266,7 @@ def record_sign_off(agent_name, approved, saving_musd=0.0):
         else:
             print(f"  {C.DIM}no dollar figure attached, so nothing was booked{C.END}\n")
     else:
-        print(f"\n  {C.R}{C.BOLD}REJECTED{C.END}  {agent_name}'s finding.")
+        print(f"\n  {C.R}{C.BOLD}REJECTED{C.END}  {what} ({agent_name}).")
         print(f"  {C.DIM}not booked  -  it does not enter the cost ledger{C.END}\n")
 
 
@@ -279,9 +280,12 @@ def show_signoff_record():
     print(f"{C.BOLD}Human sign-off record{C.END}")
     for r in rows:
         ok = r["decision"] == "signed"
-        print(f"  {(C.G + '[x] signed  ' if ok else C.R + '[ ] rejected')}{C.END} {r['agent']}")
+        what = r.get("label") or r.get("part_id") or ""
+        what = "" if what == "-" else what
+        print(f"  {(C.G + '[x] signed  ' if ok else C.R + '[ ] rejected')}{C.END} "
+              f"{r['agent']:<24}{C.DIM}{what}{C.END}")
     n = sum(1 for r in rows if r["decision"] == "signed")
-    print(f"\n  {C.BOLD}{n}/{len(rows)}{C.END} agent findings carry a human signature.")
+    print(f"\n  {C.BOLD}{n}/{len(rows)}{C.END} opportunities carry a human signature.")
     print(f"  {C.DIM}Nothing books without one  -  green = sign-off, every tier.{C.END}\n")
 
 
@@ -531,6 +535,10 @@ def main():
                     help="record a human's decision on an agent's finding, e.g. --sign vave-ideation y")
     ap.add_argument("--saving", type=float, default=0.0, metavar="M",
                     help="$M/yr the approved finding is worth; booked into the ledger on a 'y'")
+    ap.add_argument("--part", default="-", metavar="ID",
+                    help="the part_id or idea_id this decision is about")
+    ap.add_argument("--label", default="", metavar="TEXT",
+                    help="short name for the opportunity being decided")
     ap.add_argument("--signoff-record", action="store_true", help="show every sign-off decision so far")
     ap.add_argument("--ledger", action="store_true", help="show the cost ledger of approved savings")
     ap.add_argument("--plan", action="store_true",
@@ -569,7 +577,7 @@ def main():
             print(f"Unknown agent. Options: {', '.join(AGENT_PROMPTS)}"); sys.exit(1)
         if decision not in ("y", "n", "yes", "no"):
             print(f"Answer must be y or n, got {args.sign[1]!r}"); sys.exit(1)
-        record_sign_off(name, decision.startswith("y"), args.saving)
+        record_sign_off(name, decision.startswith("y"), args.saving, args.part, args.label)
         sys.exit(0)
 
     if args.data:

@@ -23,10 +23,18 @@ HOW TO WORK:
 2. Keep the ideas marked feasible = yes (note how many you dropped as
    needs-review). 
 3. Rank the feasible ideas by raw_saving_usd, highest first.
-4. Cross-check each top idea against warranty_claims.csv: if that part has a
+4. Cross-check EVERY idea against warranty_claims.csv: if that part has a
    warranty group, flag it.
-5. Report the top 5-6 ideas as a table: idea_id, component, idea_type,
-   estimated saving ($), load_bearing (yes/no), warranty flag.
+5. Report EVERY feasible idea as one complete table, not a top 5: idea_id,
+   component, idea_type, estimated saving ($), load_bearing (yes/no),
+   warranty flag.
+6. Then list the ideas you dropped as needs-review, with the reason.
+7. Finish with: total saving across all feasible ideas, how many are
+   load-bearing, and the subtotal those load-bearing ideas represent  -  that
+   is the share that cannot move without an engineer.
+
+Do not truncate to a "top N" unless the caller explicitly asks for one. The
+point of this agent is the full idea pipeline.
 
 Because of the field failure in this case, you never say an idea is approved
 or safe to ship. End every response with: load-bearing ideas require fatigue

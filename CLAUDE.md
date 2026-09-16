@@ -17,22 +17,25 @@ roadmap. One shared brain (`core.py`) is driven two ways: a terminal app
 (`cli.py`) and a Streamlit app (`app.py`). For THIS demo you drive the
 terminal app only — it is the cleanest thing to record.
 
-The model, in one breath: six specialist agents each read the same data and
-compute their own finding, an Orchestrator routes ideas to the right lever by
-trust type, and nothing counts until a human signs it — green = sign-off,
-every tier, against a $36.5M/yr target on a ~$730M addressable base.
+The model, in one breath: specialist agents each read the same data and compute
+their own findings, an Orchestrator routes ideas to the right lever by trust
+type, and nothing counts until a human signs it — green = sign-off, every tier,
+against a $36.5M/yr target on a ~$730M addressable base.
 
-## The 6 agents (in `.claude/agents/`)
+## The agents (in `.claude/agents/`)
 
-Each agent reads real synthetic data in the `data/` folder and produces its
-own output — nothing is hard-coded:
+Each agent reads real data in the `data/` folder and produces its own output —
+nothing is hard-coded. FIVE of them run in the demo:
 
-- `orchestrator` — routes a free-text idea to one of the 10 levers
-- `commodity-watch` — checks live steel/rubber/alloy prices and erosion
 - `should-cost-analytics` — reads part_master.csv + spend_cube.csv, flags gaps
 - `vave-ideation` — reads teardown_ideas.csv + warranty_claims.csv, ranks ideas
 - `parts-commonization` — reads part_master.csv, scores merge candidates
+- `orchestrator` — routes ideas to one of the 10 levers, flags load-bearing
 - `savings-ledger` — reads savings_ledger.csv, reconciles + checks double-counting
+
+Not run in the demo:
+
+- `commodity-watch` — commodity erosion; covered instantly by `cli.py --plan`
 
 ## The synthetic data (in `data/`)
 
@@ -42,20 +45,23 @@ own output — nothing is hard-coded:
 - `warranty_claims.csv` — warranty cost tied to each part
 - `teardown_ideas.csv` — raw VAVE ideas from competitor teardowns
 - `commodity_prices.csv` — steel/rubber/alloy price indices
+- `category_rates.csv` — the CASE's own commercial and VAVE % per category
+- `indirect_opportunities.csv` — the ~$100M of indirect spend and its levers
 - `savings_ledger.csv` — booked savings (starts empty by design)
 
 The agents READ these files and COMPUTE real results (should-cost gaps,
 commonization pairs, VAVE rankings, commodity erosion) — nothing is hardcoded.
 
-It is synthetic, built to mirror the case's category structure and the $630M
-base. Say "synthetic, modelled on the case data" once, near the start.
+The category spends and the commercial/VAVE rates are the case's own figures;
+the part-level rows under them are synthetic. Say "synthetic, modelled on the
+case data" once, near the start.
 
 ## Rules while recording
 
 - Run the commands EXACTLY as written below. Do not invent flags or numbers.
 - Before each command, say one sentence about what it will show.
 - After each command, read the key number off the screen out loud (e.g. the
-  should-cost gap an agent computed, "4 of 6 findings signed").
+  should-cost gap an agent computed, "7 of 10 opportunities signed").
 - This demo is the AGENTS ONLY. Run exactly the commands in the RUN SEQUENCE
   below and nothing else.
 - If a live agent call is slow, say "this is calling a real Claude agent now"
@@ -93,16 +99,18 @@ Code — no API key, this is my Claude subscription. Each one reads the data in
 data/ and produces its own finding, and each one needs a human signature
 before it counts."
 
-Go through these SIX agents, ONE AT A TIME, in this order:
+Go through these FIVE agents, ONE AT A TIME, in this order:
 
 ```
-commodity-watch
 should-cost-analytics
 vave-ideation
 parts-commonization
 orchestrator
 savings-ledger
 ```
+
+Do NOT run `commodity-watch` in the demo. Its analysis is covered instantly by
+`cli.py --plan` in Step 3, so it does not need a live agent call here.
 
 For EACH agent, do these three things in order, then move to the next agent:
 
@@ -113,33 +121,46 @@ running right now."
 python cli.py --agent <name>
 ```
 
-**2. Read out ONE concrete thing it found** — a should-cost gap, a VAVE idea,
-a commonization pair, a dollar figure. Never read a number the screen did not
-print. The output ends with "Awaiting human sign-off", because the finding
-counts for nothing until a person signs it.
+**2. Talk through what it found — the WHOLE list, not one line.** Each agent
+prints its complete opportunity table: every part with a should-cost gap,
+every feasible VAVE idea, every commonization pair. Cover:
+  - the TOTAL the agent computed, and what share of spend or target that is
+  - the top 2-3 named items with their part ids and dollar figures
+  - how many items there are in total, and how many are load-bearing
+Never read a number the screen did not print. The output ends with "Awaiting
+human sign-off", because the finding counts for nothing until a person signs
+it.
 
-**3. ASK THE USER "do you want to go ahead with this?" and WAIT.** Use
-AskUserQuestion with two options — "Yes, book it" and "No, skip it" — naming
-the agent and the dollar figure, e.g. "Go ahead with commodity-watch's
-$2.6M/yr finding?". The human decides. Never decide for them, never assume a
-yes, never skip the question to save time.
+**3. Take the TWO opportunities in the agent's "FOR DECISION" section, ONE AT
+A TIME.** Each agent ends with exactly two, each carrying a PART, WHERE, WHY,
+SAVING and RISK line. For EACH of the two, in turn:
 
-When they answer, record it. On a YES the finding goes into the cost ledger;
-on a NO it goes nowhere:
+First say it out loud in one or two sentences, in this shape:
+> "The first one is part F-3001, a forging. It came out of part_master.csv —
+> unit cost 1,240 against a should-cost of 1,216 across 49,470 units a year.
+> That's $1.87M a year. It IS load-bearing, so it can't move without fatigue
+> testing and an engineer."
+
+Always name: the part id, where the numbers came from, the arithmetic, the
+dollar figure, and the risk flag. Then ASK and WAIT — AskUserQuestion with
+"Yes, book it" and "No, skip it", phrased as "Should we proceed with F-3001,
+$1.87M/yr?". The human decides. Never decide for them, never assume a yes.
+
+Record their answer immediately:
 ```
-python cli.py --sign <name> y --saving <$M/yr>     (yes -> booked)
-python cli.py --sign <name> n                      (no  -> not booked)
+python cli.py --sign <agent> y --saving <$M/yr> --part <PART_ID> --label "<short name>"
+python cli.py --sign <agent> n --part <PART_ID> --label "<short name>"
 ```
-The `--saving` figure MUST be one the agent actually printed on screen. If the
-agent printed no dollar figure, pass `--sign <name> y` with no `--saving` —
-it records the approval without booking a number you cannot justify.
+The `--saving` figure MUST be one the agent printed. If it printed no dollar
+figure, omit `--saving` — the approval is recorded without booking a number
+you cannot justify.
 
-Act on their answer immediately — a "yes" means go ahead and book it. Do NOT
-ask them to confirm a decision they already gave.
+Read out what the screen says: the booking id and the running ledger total
+("the ledger now stands at $8.8M of $36.5M"). On a rejection say "that one
+does not enter the ledger."
 
-Read out what the screen says after: the booking id, and the running ledger
-total ("the ledger now stands at $8.8M of $36.5M"). On a rejection say "that
-one does not enter the ledger."
+Then do the SECOND opportunity the same way. Two opportunities, two separate
+decisions, every agent. Do NOT bundle them into one question.
 
 **4. ASK whether to move on to the next agent, and WAIT.** Use AskUserQuestion
 with "Next agent" and "Hold here" — e.g. "Move on to should-cost-analytics?".
@@ -157,10 +178,10 @@ Show what the human actually approved, and the ledger it built:
 ```
 python cli.py --signoff-record
 ```
-Read off the screen: "N/6 agent findings carry a human signature", then the
+Read off the screen: "N/10 opportunities carry a human signature", then the
 ledger total and what percent of the $36.5M target it is.
 
-Say: "Six agents, each reading the same data, each computing its own finding —
+Say: "Five agents, each reading the same data, each computing its own findings —
 and the only things in that ledger are the ones a human said yes to. That's
 Intent-Driven Savings, and it all runs on Claude Code with no API key."
 

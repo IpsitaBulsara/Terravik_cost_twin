@@ -150,16 +150,40 @@ def call_agent(instruction, needs_web=False, timeout=150):
 
 
 # --- agent registry: prompts for calling each subagent directly, live ------
+
+# Every analyst agent computes its whole opportunity list, then nominates
+# exactly two of them for a human to decide on. Two keeps the demo moving
+# while still showing that each item is signed on its own merits.
+_FOR_DECISION = (
+    "Then end with a section headed 'FOR DECISION' containing EXACTLY TWO "
+    "opportunities from your analysis - the two you would put in front of a "
+    "category manager first. Number them 1 and 2, and for each give these "
+    "five things on their own lines:\n"
+    "  PART: the part_id or idea_id, its category, and its annual spend\n"
+    "  WHERE: which file and which column the numbers came from\n"
+    "  WHY: the arithmetic that makes it an opportunity, in one sentence with "
+    "the actual numbers (e.g. unit cost 1240 vs should-cost 1216 across 49,470 "
+    "units)\n"
+    "  SAVING: the saving in $M/yr to one decimal place\n"
+    "  RISK: load-bearing yes/no, plus any warranty or single-source flag, and "
+    "what would have to be true before it could proceed\n"
+    "Nothing else in that section. Do not recommend approval - the human "
+    "decides whether to proceed."
+)
+
 AGENT_PROMPTS = {
-    "orchestrator": ("Use the orchestrator subagent to classify this idea: a hydraulic fitting shared across two loader models.", False),
-    "commodity-watch": ("Use the commodity-watch subagent. Read data/commodity_prices.csv and data/part_master.csv, compute the price move and estimated dollar erosion per commodity, and show the numbers.", True),
-    "should-cost-analytics": ("Use the should-cost-analytics subagent. Read data/part_master.csv and data/spend_cube.csv, compute the should-cost gap per part and aggregate by category and supplier, then show a ranked table of the top 5 opportunities with the dollar and percent gaps you computed.", False),
-    "vave-ideation": ("Use the vave-ideation subagent. Read data/teardown_ideas.csv and data/warranty_claims.csv, keep the feasible ideas, rank them by saving, and show the top 5-6 as a table with saving, load-bearing flag, and warranty flag.", False),
-    "parts-commonization": ("Use the parts-commonization subagent. Read data/part_master.csv, find real commonization candidate pairs within each category, score them, and show a ranked table with part ids, similarity, load-bearing flag, combined spend, and estimated saving.", False),
-    "savings-ledger": ("Use the savings-ledger subagent. Read data/savings_ledger.csv, sum the booked savings, check for double-counting by part_id, and report the total against the $36.5M target.", False),
+    "orchestrator": ("Use the orchestrator subagent. Read data/teardown_ideas.csv and route EVERY idea in it to one of the 10 levers, flagging load-bearing. Show a full table: idea_id, component, lever, load-bearing, and a short rationale. Then summarise how many ideas landed on each lever and how many are load-bearing.", False),
+    "commodity-watch": ("Use the commodity-watch subagent. Read data/commodity_prices.csv and data/category_rates.csv and show, for EVERY category, the planned commercial saving, the raw-material cost increase, and what survives. End with the total that evaporated as a percent of the $36.5M target.", True),
+    "should-cost-analytics": ("Use the should-cost-analytics subagent. Read data/part_master.csv and data/spend_cube.csv and compute the should-cost gap for EVERY part. Show the COMPLETE ranked table of every part with a positive gap - not a top 5 - with its dollar gap and percent gap, then the roll-up by category and by supplier, then the grand total and what percent of spend it is. " + _FOR_DECISION, False),
+    "vave-ideation": ("Use the vave-ideation subagent. Read data/teardown_ideas.csv, data/part_master.csv and data/warranty_claims.csv. Show the COMPLETE ranked table of EVERY feasible idea - not a top 5 - with idea_id, component, idea_type, saving, load-bearing flag and warranty flag. Then list the ideas you dropped as needs-review and why, and give the total saving of all feasible ideas. " + _FOR_DECISION, False),
+    "parts-commonization": ("Use the parts-commonization subagent. Read data/part_master.csv and find EVERY commonization candidate pair within each category. Show the COMPLETE ranked table - not a top 5 - with both part ids, similarity score, load-bearing flag, combined spend and estimated saving, then the total estimated saving across all pairs and how many are load-bearing. " + _FOR_DECISION, False),
+    "savings-ledger": ("Use the savings-ledger subagent. Read data/savings_ledger.csv, list EVERY booked row, sum the booked savings, check for double-counting by part_id, and report the total against the $36.5M target.", False),
 }
 
-AGENT_ORDER = ["commodity-watch", "should-cost-analytics", "vave-ideation",
+# commodity-watch is deliberately not in the demo order: its analysis is
+# covered by `cli.py --plan`, which computes the same erosion across every
+# category without spending a live agent call on it.
+AGENT_ORDER = ["should-cost-analytics", "vave-ideation",
                "parts-commonization", "orchestrator", "savings-ledger"]
 
 
