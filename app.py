@@ -65,9 +65,9 @@ if st.sidebar.button("Reset run"):
     st.session_state.state = core.RoadmapState(); st.session_state.steps = []; st.rerun()
 
 # --- tabs ---
-t_found, t_run, t_submit, t_sign, t_ledger, t_agent, t_demo = st.tabs(
+t_found, t_run, t_submit, t_sign, t_ledger, t_agent = st.tabs(
     ["🏗️ Phase 1 Foundations", "🎬 Run Roadmap", "💡 Submit an Idea",
-     "✍️ Sign-off Queue", "📒 Booked Ledger", "🤖 Call an Agent", "🎭 Agent-by-Agent Demo"])
+     "✍️ Sign-off Queue", "📒 Booked Ledger", "🤖 Call an Agent"])
 
 # 1) Foundations / readiness gate
 with t_found:
@@ -258,42 +258,6 @@ with t_agent:
                 ok, out = core.call_agent(prompt, needs_web=(agent == "commodity-watch"))
             (st.success if ok else st.error)("Done" if ok else "Failed")
             st.markdown(out)
-
-# 7) agent-by-agent demo  -  runs every subagent live, one at a time, and
-# reveals each one's output as soon as it finishes (not all at once at the end)
-with t_demo:
-    st.subheader("Agent-by-agent demo  -  watch every subagent run, live, one at a time")
-    st.write(
-        "Runs the full agent lineup in sequence  -  commodity-watch, should-cost-analytics, "
-        "vave-ideation, parts-commonization, orchestrator, savings-ledger  -  each one calling "
-        "the real Claude Code subagent against the data files. Each card fills in as soon as "
-        "that agent finishes, so you can watch them work one by one instead of waiting for the "
-        "whole batch."
-    )
-    live_ready = core.claude_available()
-    if not live_ready:
-        st.error("Claude Code not found on PATH  -  this demo needs live agents to run.")
-    else:
-        if st.button("▶ Run every agent, one by one", type="primary"):
-            placeholders = {name: st.empty() for name in core.AGENT_ORDER}
-            for name, ph in placeholders.items():
-                with ph.container(border=True):
-                    st.markdown(f"**{name}**")
-                    st.caption("queued...")
-
-            def on_start(name):
-                with placeholders[name].container(border=True):
-                    st.markdown(f"**⏳ {name}**")
-                    st.caption("running now  -  15-90s")
-
-            def on_done(result):
-                with placeholders[result.name].container(border=True):
-                    icon = "✅" if result.ok else "❌"
-                    st.markdown(f"**{icon} {result.name}**")
-                    st.markdown(result.output)
-
-            core.run_all_agents(on_start=on_start, on_done=on_done)
-            st.success("All agents finished.")
 
 st.markdown("---")
 st.caption("Team Fourmula One  -  Accenture B-School Challenge, Decade Edition, Grand Finale.")

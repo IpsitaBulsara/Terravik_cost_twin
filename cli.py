@@ -166,6 +166,20 @@ def sign_loop(state):
 AGENT_PROMPTS = core.AGENT_PROMPTS
 
 
+def call_all_agents():
+    print(f"{C.BOLD}Agent-by-agent demo  -  each subagent runs live, one at a time{C.END}\n")
+
+    def announce(name):
+        print(f"{C.P}{C.BOLD}=== {name} ==={C.END}")
+        print(f"{C.DIM}  running (15-90s)...{C.END}")
+
+    def show(result):
+        print(result.output if result.ok else f"{C.R}{result.output}{C.END}")
+        print()
+
+    core.run_all_agents(on_start=announce, on_done=show)
+
+
 def call_one_agent():
     names = list(AGENT_PROMPTS)
     for i, n in enumerate(names, 1):
@@ -191,6 +205,7 @@ def interactive(state):
   6  Show full state (booked / pending / blocked)
   7  Call one agent directly (live)
   8  Reset
+  9  Run every agent, one by one (live demo)
   q  Quit
 """
     while True:
@@ -218,6 +233,10 @@ def interactive(state):
         elif c == "8":
             state.__dict__.update(core.RoadmapState().__dict__)
             print(f"{C.G}Reset.{C.END}\n")
+        elif c == "9":
+            if not core.claude_available():
+                print(f"{C.Y}Claude Code not found.{C.END}\n"); continue
+            call_all_agents()
         elif c == "q":
             print("Bye!\n"); return
         else:
@@ -260,16 +279,7 @@ def main():
 
     if args.all_agents:
         banner()
-
-        def announce(name):
-            print(f"{C.P}{C.BOLD}=== {name} ==={C.END}")
-            print(f"{C.DIM}  running (15-90s)...{C.END}")
-
-        def show(result):
-            print(result.output if result.ok else f"{C.R}{result.output}{C.END}")
-            print()
-
-        core.run_all_agents(on_start=announce, on_done=show)
+        call_all_agents()
         sys.exit(0)
 
     if args.agent:
