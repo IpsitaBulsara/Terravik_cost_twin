@@ -60,8 +60,10 @@ base. Say "synthetic, modelled on the case data" once, near the start.
   below and nothing else.
 - If a live agent call is slow, say "this is calling a real Claude agent now"
   and wait — do not cancel it.
-- The sign-off is the HUMAN's. Always stop and ask; never sign on their
+- The decision is the HUMAN's. Always stop and ask; never decide on their
   behalf, never guess their answer, never skip the question to save time.
+- Act on the answer you get. If they say yes, go ahead and book it — do not
+  re-ask or seek confirmation of a decision they already made.
 - Never claim a number the tool did not print. If the screen and your script
   disagree, trust the screen.
 
@@ -71,10 +73,10 @@ base. Say "synthetic, modelled on the case data" once, near the start.
 Say: "Everything runs on real data — a part master, a spend cube, warranty
 claims, teardown ideas. The agents read these files and compute their own
 answers. Nothing is hardcoded."
-Run (the reset clears any sign-offs from a previous take, so the demo starts
-from a clean slate):
+Run (the reset empties the ledger and clears any decisions from a previous
+take, so the demo starts from a clean slate):
 ```
-python cli.py --reset-signoffs
+python cli.py --reset-demo
 python cli.py --data
 ```
 Then read out: 40 parts, ~$630M, six data files.
@@ -110,33 +112,51 @@ a commonization pair, a dollar figure. Never read a number the screen did not
 print. The output ends with "Awaiting human sign-off", because the finding
 counts for nothing until a person signs it.
 
-**3. ASK THE USER to sign it, and WAIT for their answer.** Use AskUserQuestion
-with two options — "Sign off" and "Reject" — phrased as, e.g., "Sign off on
-commodity-watch's finding?". The human decides; you never decide for them and
-never assume a yes. When they answer, record it:
-```
-python cli.py --sign <name> y      (if they signed off)
-python cli.py --sign <name> n      (if they rejected)
-```
-Say what just happened — "signed off by the category manager", or on a reject,
-"that's the gate saying no; that finding does not count."
+**3. ASK THE USER "do you want to go ahead with this?" and WAIT.** Use
+AskUserQuestion with two options — "Yes, book it" and "No, skip it" — naming
+the agent and the dollar figure, e.g. "Go ahead with commodity-watch's
+$2.6M/yr finding?". The human decides. Never decide for them, never assume a
+yes, never skip the question to save time.
 
-Every agent faces this. None is exempt, and no finding is signed by anyone but
-the human watching.
+When they answer, record it. On a YES the finding goes into the cost ledger;
+on a NO it goes nowhere:
+```
+python cli.py --sign <name> y --saving <$M/yr>     (yes -> booked)
+python cli.py --sign <name> n                      (no  -> not booked)
+```
+The `--saving` figure MUST be one the agent actually printed on screen. If the
+agent printed no dollar figure, pass `--sign <name> y` with no `--saving` —
+it records the approval without booking a number you cannot justify.
+
+Act on their answer immediately — a "yes" means go ahead and book it. Do NOT
+ask them to confirm a decision they already gave.
+
+Read out what the screen says after: the booking id, and the running ledger
+total ("the ledger now stands at $8.8M of $36.5M"). On a rejection say "that
+one does not enter the ledger."
+
+**4. ASK whether to move on to the next agent, and WAIT.** Use AskUserQuestion
+with "Next agent" and "Hold here" — e.g. "Move on to should-cost-analytics?".
+This lets them talk over a finding before the next agent starts. On the last
+agent (savings-ledger) skip this and go to Step 2.
+
+Every agent faces this. None is exempt, and nothing enters the ledger except
+what the human approved.
 
 Each agent reads data/part_master.csv (and its own file) — so if one ever says
 the data is missing, the data/ folder wasn't shipped; check it's present.
 
 ### Step 2 — Close
-Show the tally of what the human actually signed:
+Show what the human actually approved, and the ledger it built:
 ```
 python cli.py --signoff-record
 ```
-Read the "N/6 agent findings carry a human signature" line off the screen.
+Read off the screen: "N/6 agent findings carry a human signature", then the
+ledger total and what percent of the $36.5M target it is.
 
-Say: "Six agents, each reading the same data, each computing its own finding,
-and not one of them counts until a person signs it. That's Intent-Driven
-Savings — and it all runs on Claude Code with no API key."
+Say: "Six agents, each reading the same data, each computing its own finding —
+and the only things in that ledger are the ones a human said yes to. That's
+Intent-Driven Savings, and it all runs on Claude Code with no API key."
 
 ## If something breaks on camera
 - A command errors: say "let me re-run that", run it once more, move on.

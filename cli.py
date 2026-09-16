@@ -180,22 +180,93 @@ SIGNOFF_LOG = core._os.path.join(core._os.path.dirname(core._os.path.abspath(__f
                                  "signoff_log.csv")
 
 
-def record_sign_off(agent_name, approved):
+LEDGER = core.foundation_file("savings_ledger")
+LEDGER_HEADER = ["booking_id", "lever", "trust_type", "part_id",
+                 "saving_usd_yr", "status", "approved_by", "booked_date"]
+
+# Which of the 10 levers a signed finding from each agent books under.
+AGENT_LEVER = {
+    "commodity-watch": "should_cost",
+    "should-cost-analytics": "should_cost",
+    "vave-ideation": "subtier_teardown",
+    "parts-commonization": "commonization",
+    "orchestrator": "should_cost",
+    "savings-ledger": "should_cost",
+}
+
+
+def book_to_ledger(agent_name, saving_musd, part_id="-"):
+    """Append a human-approved finding to the cost ledger."""
+    import csv, datetime
+    lever = core.lever_by_id(AGENT_LEVER.get(agent_name, "should_cost"))
+    rows = ledger_rows()
+    booking_id = f"BK-{len(rows) + 1:03d}"
+    if not core._os.path.exists(LEDGER) or not rows:
+        with open(LEDGER, "w", encoding="utf-8", newline="") as f:
+            csv.writer(f).writerow(LEDGER_HEADER)
+    with open(LEDGER, "a", encoding="utf-8", newline="") as f:
+        csv.writer(f).writerow([
+            booking_id, lever.name, lever.trust.value, part_id,
+            int(round(saving_musd * 1_000_000)), "Booked",
+            f"human sign-off ({agent_name})",
+            datetime.date.today().isoformat(),
+        ])
+    return booking_id
+
+
+def ledger_rows():
+    import csv
+    if not core._os.path.exists(LEDGER):
+        return []
+    with open(LEDGER, encoding="utf-8", newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def show_ledger():
+    rows = ledger_rows()
+    print(f"{C.BOLD}Cost ledger  -  human-approved savings only{C.END}")
+    if not rows:
+        print(f"  {C.Y}(empty  -  nothing has been signed into it yet){C.END}\n")
+        return
+    for r in rows:
+        musd = float(r["saving_usd_yr"]) / 1_000_000
+        print(f"  {C.G}{r['booking_id']}{C.END}  {r['lever']:<22} {C.BOLD}${musd:.1f}M/yr{C.END}"
+              f"  {C.DIM}{r['approved_by']}{C.END}")
+    total = sum(float(r["saving_usd_yr"]) for r in rows) / 1_000_000
+    pct = round(total / core.TARGET_ANNUAL_SAVING * 100)
+    print(f"\n  {C.G}{C.BOLD}Booked: ${total:.1f}M/yr{C.END} "
+          f"({pct}% of ${core.TARGET_ANNUAL_SAVING}M target)\n")
+
+
+def record_sign_off(agent_name, approved, saving_musd=0.0):
     """
-    Record a human's sign-off decision on a live agent finding, and show it on
-    screen. Kept in a file so the decision survives between the separate
-    commands that run the agent and sign it.
+    Record a human's decision on a live agent finding. Approved findings go
+    into the cost ledger; rejected ones go nowhere. Kept in files so the
+    decision survives between the separate commands that run and sign it.
     """
     import csv
     new = not core._os.path.exists(SIGNOFF_LOG)
     with open(SIGNOFF_LOG, "a", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         if new:
-            w.writerow(["agent", "decision"])
-        w.writerow([agent_name, "signed" if approved else "rejected"])
-    verdict = f"{C.G}SIGNED OFF{C.END}" if approved else f"{C.R}REJECTED{C.END}"
-    print(f"\n  Human sign-off on {C.BOLD}{agent_name}{C.END}'s finding: {verdict}")
-    print(f"  {C.DIM}recorded in signoff_log.csv{C.END}\n")
+            w.writerow(["agent", "decision", "saving_musd"])
+        w.writerow([agent_name, "signed" if approved else "rejected",
+                    saving_musd if approved else 0.0])
+
+    if approved:
+        print(f"\n  {C.G}{C.BOLD}APPROVED{C.END}  {agent_name}'s finding, signed by a human.")
+        if saving_musd > 0:
+            bid = book_to_ledger(agent_name, saving_musd)
+            print(f"  -> booked into the cost ledger as {C.BOLD}{bid}{C.END}, "
+                  f"{C.G}{C.BOLD}${saving_musd:.1f}M/yr{C.END}")
+            total = sum(float(r["saving_usd_yr"]) for r in ledger_rows()) / 1_000_000
+            print(f"  {C.DIM}ledger now stands at ${total:.1f}M/yr of "
+                  f"${core.TARGET_ANNUAL_SAVING}M{C.END}\n")
+        else:
+            print(f"  {C.DIM}no dollar figure attached, so nothing was booked{C.END}\n")
+    else:
+        print(f"\n  {C.R}{C.BOLD}REJECTED{C.END}  {agent_name}'s finding.")
+        print(f"  {C.DIM}not booked  -  it does not enter the cost ledger{C.END}\n")
 
 
 def show_signoff_record():
@@ -333,21 +404,32 @@ def main():
     ap.add_argument("--all-agents", action="store_true", help="run every agent in sequence, printing each one's output")
     ap.add_argument("--data", action="store_true", help="show a summary of the synthetic data foundation")
     ap.add_argument("--sign", nargs=2, metavar=("AGENT", "Y_OR_N"),
-                    help="record a human's sign-off on an agent's finding, e.g. --sign vave-ideation y")
+                    help="record a human's decision on an agent's finding, e.g. --sign vave-ideation y")
+    ap.add_argument("--saving", type=float, default=0.0, metavar="M",
+                    help="$M/yr the approved finding is worth; booked into the ledger on a 'y'")
     ap.add_argument("--signoff-record", action="store_true", help="show every sign-off decision so far")
-    ap.add_argument("--reset-signoffs", action="store_true", help="clear the sign-off record for a clean run")
+    ap.add_argument("--ledger", action="store_true", help="show the cost ledger of approved savings")
+    ap.add_argument("--reset-demo", action="store_true", help="clear sign-offs and empty the ledger for a clean run")
     args = ap.parse_args()
 
     state = core.RoadmapState()
 
-    if args.reset_signoffs:
+    if args.reset_demo:
+        import csv
         if core._os.path.exists(SIGNOFF_LOG):
             core._os.remove(SIGNOFF_LOG)
-        print(f"{C.G}Sign-off record cleared.{C.END}\n")
+        with open(LEDGER, "w", encoding="utf-8", newline="") as f:
+            csv.writer(f).writerow(LEDGER_HEADER)
+        print(f"{C.G}Clean slate  -  sign-offs cleared, cost ledger emptied.{C.END}\n")
+        sys.exit(0)
+
+    if args.ledger:
+        show_ledger()
         sys.exit(0)
 
     if args.signoff_record:
         show_signoff_record()
+        show_ledger()
         sys.exit(0)
 
     if args.sign:
@@ -356,7 +438,7 @@ def main():
             print(f"Unknown agent. Options: {', '.join(AGENT_PROMPTS)}"); sys.exit(1)
         if decision not in ("y", "n", "yes", "no"):
             print(f"Answer must be y or n, got {args.sign[1]!r}"); sys.exit(1)
-        record_sign_off(name, decision.startswith("y"))
+        record_sign_off(name, decision.startswith("y"), args.saving)
         sys.exit(0)
 
     if args.data:
@@ -393,9 +475,10 @@ def main():
         ok, out = core.call_agent(prompt, needs_web=web)
         print(out)
         if ok:
-            print(f"\n  {C.Y}{C.BOLD}Awaiting human sign-off{C.END}  {C.DIM}-  this finding "
-                  f"counts for nothing until a person signs it.{C.END}")
-            print(f"  {C.DIM}Sign it with:  python cli.py --sign {args.agent} y|n{C.END}\n")
+            print(f"\n  {C.Y}{C.BOLD}Awaiting human decision{C.END}  {C.DIM}-  nothing enters "
+                  f"the cost ledger until a person approves it.{C.END}")
+            print(f"  {C.DIM}Approve:  python cli.py --sign {args.agent} y --saving <$M/yr>{C.END}")
+            print(f"  {C.DIM}Reject :  python cli.py --sign {args.agent} n{C.END}\n")
         sys.exit(0 if ok else 1)
 
     if args.run:
