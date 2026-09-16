@@ -54,8 +54,10 @@ base. Say "synthetic, modelled on the case data" once, near the start.
 
 - Run the commands EXACTLY as written below. Do not invent flags or numbers.
 - Before each command, say one sentence about what it will show.
-- After each command, read the key number off the screen out loud (e.g.
-  "zero dollars booked", "four levers booked, six waiting").
+- After each command, read the key number off the screen out loud (e.g. the
+  should-cost gap an agent computed, "4 of 6 findings signed").
+- This demo is the AGENTS ONLY. Do not run the simulated pipeline
+  (`--run`, `--run --ready`) on camera — it is not part of the sequence.
 - If a live agent call is slow, say "this is calling a real Claude agent now"
   and wait — do not cancel it.
 - Never claim a number the tool did not print. If the screen and your script
@@ -73,26 +75,7 @@ python cli.py --data
 ```
 Then read out: 40 parts, ~$630M, six data files.
 
-### Step 1 — The readiness gate, closed
-Say: "First, the rule at the heart of the roadmap — you can't book a saving
-until you can compute and sign it. With no foundations, everything is blocked."
-Run:
-```
-python cli.py --run
-```
-Then read out: how many levers are blocked, and that booked savings is $0.
-
-### Step 2 — Stand up the foundations, run again
-Say: "Now we stand up the data foundation and the validation bench. The gate
-opens, and the Orchestrator routes all ten levers by trust type."
-Run:
-```
-python cli.py --run --ready
-```
-Then read out: how many Super-Agent levers booked automatically, how many are
-waiting for human sign-off, and the booked dollar total vs the $36.5M target.
-
-### Step 3 — Show the agents thinking for real, each with output
+### Step 1 — Show the agents thinking for real, each with output
 Say: "These aren't hard-coded. Here are the real agents running live on Claude
 Code — no API key, this is my Claude subscription. Each one reads the synthetic
 data in data/ and produces its own finding."
@@ -122,16 +105,17 @@ These prompt for the same sign-off after the agent's output. Each agent reads
 data/part_master.csv (and its own file) — so if one ever says the data is
 missing, the data/ folder wasn't shipped; check it's present.
 
-### Step 4 — Close
-Say: "From a closed gate and zero dollars, to a routed, human-signed number —
-that's Intent-Driven Savings, end to end. Everything you saw runs on Claude
-Code with no API key."
+### Step 2 — Close
+Say: "Six agents, each reading the same data foundation, each computing its own
+finding, and not one of them books a dollar without a human signature. That's
+Intent-Driven Savings — and it all runs on Claude Code with no API key."
 
 ## If something breaks on camera
 - A command errors: say "let me re-run that", run it once more, move on.
-- `--agent` hangs or fails: it needs Claude Code's own tools; skip to Step 4,
-  the simulated pipeline in Steps 1-2 already told the whole story.
-- You want a clean slate: every `python cli.py --run ...` starts fresh, so
-  just re-run the step.
+- One agent hangs or fails: the others already made the point. Sign off on
+  what did return, say "that one's still thinking, let's move on", go to
+  Step 2. Do not cancel a slow agent that is still printing.
+- Agent output looks garbled: it shouldn't — cli.py forces UTF-8 output. If
+  it ever happens, keep going; the text is readable and the numbers are fine.
 
-Begin at Step 1 when the user says "begin".
+Begin at Step 0 when the user says "begin".

@@ -287,15 +287,12 @@ def _place(state, booking_id, lever, desc, saving, load_bearing, source="Roadmap
         state.blocked.append(Booking(booking_id, lever.id, lever.name, lever.trust, saving,
                                      "Blocked - not ready", reason, source))
         return "blocked"
-    # A submitted idea can be flagged load-bearing even under a Super Agent
-    # lever -> treat it as needing sign-off regardless of the lever's usual trust.
-    if lever.trust == Trust.SUPER_AGENT and not load_bearing:
-        state.booked.append(Booking(booking_id, lever.id, lever.name, lever.trust, saving,
-                                    "Booked", desc or "AI-screened, bench-validated method", source))
-        return "booked"
+    # Green = sign-off, EVERY tier: nothing books on its own, not even a
+    # Super Agent lever. Trust type still sets how much the AI did first, but
+    # it never decides whether a human has to sign.
     note = desc or AUTONOMY[lever.trust]
-    if load_bearing and lever.trust == Trust.SUPER_AGENT:
-        note = (desc + "  -  " if desc else "") + "flagged load-bearing, routed to sign-off despite Super Agent lever"
+    if load_bearing:
+        note = (desc + "  -  " if desc else "") + "flagged load-bearing"
     state.pending.append(Booking(booking_id, lever.id, lever.name, lever.trust, saving,
                                  "Awaiting sign-off", note, source))
     return "pending"
@@ -453,9 +450,9 @@ def run_pipeline(state, live=False, on_step=None):
         counts[route_lever(state, lever)] += 1
     step2 = StepResult(
         "2. Tier 1 - Orchestrator",
-        f"{counts['booked']} Super-Agent lever(s) booked, "
-        f"{counts['pending']} lever(s) awaiting human sign-off, "
-        f"{counts['blocked']} lever(s) blocked by the readiness gate.")
+        f"{counts['pending']} lever(s) routed and awaiting human sign-off, "
+        f"{counts['blocked']} lever(s) blocked by the readiness gate. "
+        f"No lever books itself  -  not even a Super Agent.")
     if live:
         announce("Step 2/4  Orchestrator: calling live agent for a routing summary")
         lever_list = ", ".join(f"{l.name} ({l.trust.value})" for l in LEVERS)
