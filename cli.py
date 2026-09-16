@@ -177,11 +177,20 @@ AGENT_PROMPTS = core.AGENT_PROMPTS
 
 
 def prompt_sign_off(agent_name):
-    """The trust rule applied to a live agent finding. No agent is exempt."""
-    if not sys.stdin.isatty():
-        print(f"  {C.Y}No terminal to sign with  -  {agent_name}'s finding stays unsigned.{C.END}")
+    """
+    The trust rule applied to a live agent finding. No agent is exempt.
+
+    Reads the answer from stdin, so this works both when a human types it and
+    when the decisions are piped in for a scripted run. With no answer at all
+    available it fails closed: unsigned, never auto-approved.
+    """
+    try:
+        ans = input(f"  Sign off on {agent_name}'s finding? [y/N] ").strip().lower()
+    except EOFError:
+        print(f"\n  {C.Y}No signature given  -  {agent_name}'s finding stays unsigned.{C.END}\n")
         return False
-    ans = input(f"  Sign off on {agent_name}'s finding? [y/N] ").strip().lower()
+    if not sys.stdin.isatty():
+        print(ans)  # echo the piped answer so the decision is visible on screen
     ok = ans == "y"
     print(f"  -> {(C.G + 'signed off' if ok else C.R + 'rejected')}{C.END}\n")
     return ok
