@@ -377,6 +377,16 @@ def show_plan():
     print(f"  {C.DIM}that already failed in the field. That trade is not worth "
           f"{rec.gap/M:.1f} million.{C.END}\n")
 
+    ind_mid, ind_rows = cm.indirect_achievable()
+    base = sum(float(r["base_spend_usd"]) for r in ind_rows)
+    print(f"{C.BOLD}Where this is deliberately conservative{C.END}")
+    print(f"  Indirect is built bottom-up from {len(ind_rows)} named opportunities "
+          f"(${base/M:.1f}M of spend -> ${ind_mid/M:.2f}M).")
+    print(f"  The case also gives a top-down 3-5% on the full ~$100M of indirect, which "
+          f"would be $3.0-5.0M")
+    print(f"  {C.DIM}-  $0.5-2.5M more than counted above. Upside, deliberately left "
+          f"out of the recommendation.{C.END}\n")
+
     print(f"{C.BOLD}Keep / accelerate / drop{C.END}")
     for tag, colour, items in [
         ("KEEP      ", C.G, [

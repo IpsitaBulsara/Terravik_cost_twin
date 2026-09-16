@@ -79,7 +79,12 @@ take, so the demo starts from a clean slate):
 python cli.py --reset-demo
 python cli.py --data
 ```
-Then read out: 40 parts, ~$630M, six data files.
+Then read out: 40 parts, ~$630M of DIRECT MATERIALS, and the data files.
+
+Say "$630M of direct materials" — never "a $630M base". The case's addressable
+base is ~$730M: $630M direct materials + ~$100M indirect + the R&D operating
+model. The $36.5M target is 5% of $730M, not of $630M. If you say $630M and a
+judge divides, they get 5.8% and think your maths is off.
 
 ### Step 1 — Show the agents thinking for real, one at a time
 Say: "These aren't hard-coded. Here are the real agents running live on Claude
