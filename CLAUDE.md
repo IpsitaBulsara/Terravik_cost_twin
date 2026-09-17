@@ -80,10 +80,10 @@ The agents READ these files and COMPUTE real results (should-cost gaps,
 commonization pairs, VAVE rankings, commodity erosion) — nothing is hardcoded.
 
 The category spends and the commercial/VAVE rates are the case's own figures;
-the part-level rows under them are synthetic. Say "synthetic, modelled on the
-case data" once, near the start.
+the part-level rows under them are synthetic. The one line you say about this
+on screen is in "How to speak" above — say that, once, and nothing more.
 
-## Rules while recording
+## Rules while presenting
 
 - Run the commands EXACTLY as written below. Do not invent flags or numbers.
 - Before each command, say one sentence about what it will show.
@@ -123,8 +123,8 @@ python cli.py --data
 Then read out: 40 parts covering the $630M of direct materials, and the files.
 
 Always frame the base as **$730M**, and $630M as the direct-materials slice of
-it. The $36.5M target is 5% of $730M. If you call $630M "the base" and a judge
-divides, they get 5.8% and think your maths is off.
+it. The $36.5M target is 5% of $730M. If you call $630M "the base" and someone
+in the room divides, they get 5.8% and think the maths is wrong.
 
 ### Step 1 — The four agents, one at a time
 Say: "Four agents work this spend, and they are not trusted equally. Two of
@@ -258,8 +258,8 @@ where they belong. That is the difference between a number on paper and a
 saving you can bank."
 
 ### Step 3 — OPTIONAL: the answer to the Grand Finale twist
-Only run this if the user asks for it, or if a judge asks "so what's your
-actual recommendation?". It is analysis, not an agent, and it is instant.
+Only run this if the user asks for it, or if someone in the room asks "so
+what is your actual recommendation?". It is analysis, not an agent, and it is instant.
 ```
 python cli.py --plan
 ```
