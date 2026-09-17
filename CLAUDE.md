@@ -70,8 +70,13 @@ case data" once, near the start.
 - Before each command, say one sentence about what it will show.
 - After each command, read the key number off the screen out loud (e.g. the
   should-cost gap an agent computed, "6 of 8 opportunities signed").
-- This demo is the AGENTS ONLY. Run exactly the commands in the RUN SEQUENCE
-  below and nothing else.
+- ONLY these four agents run, in this order, and no others:
+  `should-cost-analytics`, `parts-commonization`, `freight-lane`,
+  `vave-ideation`. Never run `commodity-watch`, `orchestrator`,
+  `savings-ledger`, `--all-agents`, `--run`, or anything not in the RUN
+  SEQUENCE below.
+- EVERY item gets a human decision. Two items per agent, asked one at a time,
+  eight in total. You never approve, choose, or skip on the human's behalf.
 - If a live agent call is slow, say "this is calling a real Claude agent now"
   and wait — do not cancel it.
 - The decision is the HUMAN's. Always stop and ask; never decide on their
@@ -199,12 +204,14 @@ run-rate: "that's approved, but it earns nothing until the test comes back."
 On a rejection say "that one does not enter the ledger."
 
 **4. ASK whether to move on to the next agent, and WAIT.** Use AskUserQuestion
-with "Next agent" and "Hold here" — e.g. "Move on to should-cost-analytics?".
-This lets them talk over a finding before the next agent starts. On the last
-agent (savings-ledger) skip this and go to Step 2.
+with "Next agent" and "Hold here" — e.g. "Move on to parts-commonization?".
+This lets them talk over a finding before the next agent starts. After the
+LAST agent (`vave-ideation`) skip this and go to Step 2.
 
-Every agent faces this. None is exempt, and nothing enters the ledger except
-what the human approved.
+Every item faces a human. None is exempt, and nothing enters the ledger except
+what the human approved. That is 4 agents x 2 items = 8 decisions, plus 3
+"move on?" questions. Do not shorten it, do not batch it, and do not answer
+any of it yourself.
 
 Each agent reads data/part_master.csv (and its own file) — so if one ever says
 the data is missing, the data/ folder wasn't shipped; check it's present.
