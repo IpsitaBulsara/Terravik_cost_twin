@@ -154,6 +154,8 @@ def call_agent(instruction, needs_web=False, timeout=150):
 # Every analyst agent computes its whole opportunity list, then nominates
 # exactly two of them for a human to decide on. Two keeps the demo moving
 # while still showing that each item is signed on its own merits.
+# SUPER AGENT tier: AI owns the screen, so it puts a straight yes/no in front
+# of a human -- one call per opportunity, no menu.
 _FOR_DECISION = (
     "Then end with a section headed 'FOR DECISION' containing EXACTLY TWO "
     "opportunities from your analysis - the two you would put in front of a "
@@ -167,24 +169,39 @@ _FOR_DECISION = (
     "  SAVING: the saving in $M/yr to one decimal place\n"
     "  RISK: load-bearing yes/no, plus any warranty or single-source flag, and "
     "what would have to be true before it could proceed\n"
-    "Nothing else in that section. Do not recommend approval - the human "
-    "decides whether to proceed."
+    "Nothing else in that section. It is a straight yes/no per opportunity - "
+    "do not offer alternatives, and do not approve it yourself."
 )
+
+# What each agent's closing section is called, and how a human answers it.
+# This is the trust tier expressed as an interaction, not just a label.
+AGENT_TIER = {
+    "should-cost-analytics": (Trust.SUPER_AGENT, "FOR DECISION",
+                              "two opportunities, each a straight yes/no"),
+    "parts-commonization": (Trust.SUPER_AGENT, "FOR DECISION",
+                            "two candidate pairs, each a straight yes/no"),
+    "freight-lane": (Trust.UTILITY, "FOR CHOICE",
+                     "two lanes, each with four priced options - the human picks one"),
+    "vave-ideation": (Trust.HUMAN_LED, "FOR ENGINEERING JUDGEMENT",
+                      "two ideas, each with the test that must pass and who owns it"),
+}
 
 AGENT_PROMPTS = {
     "orchestrator": ("Use the orchestrator subagent. Read data/teardown_ideas.csv and route EVERY idea in it to one of the 10 levers, flagging load-bearing. Show a full table: idea_id, component, lever, load-bearing, and a short rationale. Then summarise how many ideas landed on each lever and how many are load-bearing.", False),
     "commodity-watch": ("Use the commodity-watch subagent. Read data/commodity_prices.csv and data/category_rates.csv and show, for EVERY category, the planned commercial saving, the raw-material cost increase, and what survives. End with the total that evaporated as a percent of the $36.5M target.", True),
     "should-cost-analytics": ("Use the should-cost-analytics subagent. Read data/part_master.csv and data/spend_cube.csv and compute the should-cost gap for EVERY part. Show the COMPLETE ranked table of every part with a positive gap - not a top 5 - with its dollar gap and percent gap, then the roll-up by category and by supplier, then the grand total and what percent of spend it is. " + _FOR_DECISION, False),
-    "vave-ideation": ("Use the vave-ideation subagent. Read data/teardown_ideas.csv, data/part_master.csv and data/warranty_claims.csv. Show the COMPLETE ranked table of EVERY feasible idea - not a top 5 - with idea_id, component, idea_type, saving, load-bearing flag and warranty flag. Then list the ideas you dropped as needs-review and why, and give the total saving of all feasible ideas. " + _FOR_DECISION, False),
+    "vave-ideation": ("Use the vave-ideation subagent. Read data/teardown_ideas.csv, data/part_master.csv and data/warranty_claims.csv. Show the COMPLETE ranked table of EVERY feasible idea - not a top 5 - with idea_id, component, idea_type, saving, load-bearing flag, warranty flag and single-source flag. Then list the ideas you dropped as needs-review and why, and give the total across all feasible ideas plus what the load-bearing ones are worth. Then give the FOR ENGINEERING JUDGEMENT section exactly as your agent definition specifies, with the TEST REQUIRED, WHO OWNS IT and IF IT FAILS lines filled in for both ideas.", False),
+    "freight-lane": ("Use the freight-lane subagent. Read data/freight_lanes.csv and compute, for EVERY lane, the annual saving of all four buying options (fixed contract, index-linked, consolidation/slow-steam, stay on spot), and show the complete table with transit days, on-time percent and single-carrier flag, plus the portfolio total for each option. Then give the FOR CHOICE section exactly as your agent definition specifies, with all four options priced for each of the two lanes. Do not pick one - the human chooses.", False),
     "parts-commonization": ("Use the parts-commonization subagent. Read data/part_master.csv and find EVERY commonization candidate pair within each category. Show the COMPLETE ranked table - not a top 5 - with both part ids, similarity score, load-bearing flag, combined spend and estimated saving, then the total estimated saving across all pairs and how many are load-bearing. " + _FOR_DECISION, False),
     "savings-ledger": ("Use the savings-ledger subagent. Read data/savings_ledger.csv, list EVERY booked row, sum the booked savings, check for double-counting by part_id, and report the total against the $36.5M target.", False),
 }
 
-# commodity-watch is deliberately not in the demo order: its analysis is
-# covered by `cli.py --plan`, which computes the same erosion across every
-# category without spending a live agent call on it.
-AGENT_ORDER = ["should-cost-analytics", "vave-ideation",
-               "parts-commonization", "orchestrator", "savings-ledger"]
+# One agent per trust tier, in the order the demo runs them: two Super Agents
+# that ask for a decision, a Utility agent that offers options, then the
+# Human-led agent where the engineer leads. commodity-watch and the others
+# stay callable, they are just not part of this sequence.
+AGENT_ORDER = ["should-cost-analytics", "parts-commonization",
+               "freight-lane", "vave-ideation"]
 
 
 @dataclass

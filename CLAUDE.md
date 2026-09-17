@@ -25,17 +25,24 @@ against a $36.5M/yr target on a ~$730M addressable base.
 ## The agents (in `.claude/agents/`)
 
 Each agent reads real data in the `data/` folder and produces its own output —
-nothing is hard-coded. FIVE of them run in the demo:
+nothing is hard-coded. FOUR run in the demo, one per trust tier, and each asks
+a DIFFERENT question:
 
-- `should-cost-analytics` — reads part_master.csv + spend_cube.csv, flags gaps
-- `vave-ideation` — reads teardown_ideas.csv + warranty_claims.csv, ranks ideas
-- `parts-commonization` — reads part_master.csv, scores merge candidates
-- `orchestrator` — routes ideas to one of the 10 levers, flags load-bearing
-- `savings-ledger` — reads savings_ledger.csv, reconciles + checks double-counting
+- `should-cost-analytics` — SUPER AGENT. part_master + spend_cube, gap per
+  part. Puts a straight yes/no in front of a human.
+- `parts-commonization` — SUPER AGENT. part_master, scores merge candidates.
+  Straight yes/no.
+- `freight-lane` — UTILITY. freight_lanes.csv, prices four buying options per
+  lane and refuses to pick. The human chooses one.
+- `vave-ideation` — HUMAN-LED. teardown_ideas + warranty_claims. Names the
+  physical test, who owns it, and what breaks if it is wrong. A yes here books
+  nothing until the test passes.
 
 Not run in the demo:
 
 - `commodity-watch` — commodity erosion; covered instantly by `cli.py --plan`
+- `orchestrator` — routes free-text ideas to a lever
+- `savings-ledger` — reconciles the ledger, checks double-counting
 
 ## The synthetic data (in `data/`)
 
@@ -45,6 +52,7 @@ Not run in the demo:
 - `warranty_claims.csv` — warranty cost tied to each part
 - `teardown_ideas.csv` — raw VAVE ideas from competitor teardowns
 - `commodity_prices.csv` — steel/rubber/alloy price indices
+- `freight_lanes.csv` — 6 ocean lanes, ~$18M/yr, with option rates per lane
 - `category_rates.csv` — the CASE's own commercial and VAVE % per category
 - `indirect_opportunities.csv` — the ~$100M of indirect spend and its levers
 - `savings_ledger.csv` — booked savings (starts empty by design)
@@ -61,7 +69,7 @@ case data" once, near the start.
 - Run the commands EXACTLY as written below. Do not invent flags or numbers.
 - Before each command, say one sentence about what it will show.
 - After each command, read the key number off the screen out loud (e.g. the
-  should-cost gap an agent computed, "7 of 10 opportunities signed").
+  should-cost gap an agent computed, "6 of 8 opportunities signed").
 - This demo is the AGENTS ONLY. Run exactly the commands in the RUN SEQUENCE
   below and nothing else.
 - If a live agent call is slow, say "this is calling a real Claude agent now"
@@ -99,18 +107,19 @@ Code — no API key, this is my Claude subscription. Each one reads the data in
 data/ and produces its own finding, and each one needs a human signature
 before it counts."
 
-Go through these FIVE agents, ONE AT A TIME, in this order:
+Go through these FOUR agents, ONE AT A TIME, in this order. They are one per
+trust tier, and THE POINT OF THE DEMO IS THAT EACH TIER ASKS A DIFFERENT
+QUESTION. Say the tier out loud before each agent.
 
 ```
-should-cost-analytics
-vave-ideation
-parts-commonization
-orchestrator
-savings-ledger
+should-cost-analytics    SUPER AGENT   -> straight yes/no
+parts-commonization      SUPER AGENT   -> straight yes/no
+freight-lane             UTILITY       -> options, the human picks one
+vave-ideation            HUMAN-LED     -> needs a test and an owner
 ```
 
-Do NOT run `commodity-watch` in the demo. Its analysis is covered instantly by
-`cli.py --plan` in Step 3, so it does not need a live agent call here.
+Do NOT run `commodity-watch`, `orchestrator` or `savings-ledger` in the demo.
+Commodity erosion is covered instantly by `cli.py --plan` in Step 3.
 
 For EACH agent, do these three things in order, then move to the next agent:
 
@@ -131,36 +140,63 @@ Never read a number the screen did not print. The output ends with "Awaiting
 human sign-off", because the finding counts for nothing until a person signs
 it.
 
-**3. Take the TWO opportunities in the agent's "FOR DECISION" section, ONE AT
-A TIME.** Each agent ends with exactly two, each carrying a PART, WHERE, WHY,
-SAVING and RISK line. For EACH of the two, in turn:
+**3. Take the TWO items in the agent's closing section, ONE AT A TIME.** Every
+agent ends with exactly two. Always state the id, where the numbers came from,
+the arithmetic, and the dollar figure before you ask. Never bundle the two into
+one question. HOW you ask depends on the tier:
 
-First say it out loud in one or two sentences, in this shape:
-> "The first one is part F-3001, a forging. It came out of part_master.csv —
-> unit cost 1,240 against a should-cost of 1,216 across 49,470 units a year.
-> That's $1.87M a year. It IS load-bearing, so it can't move without fatigue
-> testing and an engineer."
+**SUPER AGENT — `should-cost-analytics`, `parts-commonization`.** Section is
+`FOR DECISION`. Say it, then ask a straight yes/no:
+> "The first one is part F-3001, a forging. From part_master.csv — unit cost
+> 1,240 against a should-cost of 1,216 across 49,470 units a year. That's
+> $1.87M a year, and it IS load-bearing."
 
-Always name: the part id, where the numbers came from, the arithmetic, the
-dollar figure, and the risk flag. Then ASK and WAIT — AskUserQuestion with
-"Yes, book it" and "No, skip it", phrased as "Should we proceed with F-3001,
-$1.87M/yr?". The human decides. Never decide for them, never assume a yes.
-
-Record their answer immediately:
+AskUserQuestion, "Yes, book it" / "No, skip it" — "Should we proceed with
+F-3001, $1.87M/yr?". Then:
 ```
-python cli.py --sign <agent> y --saving <$M/yr> --part <PART_ID> --label "<short name>"
-python cli.py --sign <agent> n --part <PART_ID> --label "<short name>"
+python cli.py --sign <agent> y --saving <$M/yr> --part <ID> --label "<short name>"
+python cli.py --sign <agent> n --part <ID> --label "<short name>"
 ```
-The `--saving` figure MUST be one the agent printed. If it printed no dollar
-figure, omit `--saving` — the approval is recorded without booking a number
-you cannot justify.
 
-Read out what the screen says: the booking id and the running ledger total
-("the ledger now stands at $8.8M of $36.5M"). On a rejection say "that one
-does not enter the ledger."
+**UTILITY — `freight-lane`.** Section is `FOR CHOICE`. The agent does NOT pick;
+it prices four options per lane. Read all four out with their trade-offs, then
+let the human choose:
+> "Lane L-01, Chennai to Rotterdam, $5.2M a year, bought on spot. Four options:
+> a fixed contract saves $0.47M but locks the rate; index-linked saves $0.31M
+> and shares the risk; consolidating and slow-steaming saves $0.21M but adds
+> transit days; staying on spot saves nothing and keeps flexibility. On-time is
+> only 82% on this lane."
 
-Then do the SECOND opportunity the same way. Two opportunities, two separate
-decisions, every agent. Do NOT bundle them into one question.
+AskUserQuestion with the FOUR options as the choices. Then record which one:
+```
+python cli.py --sign freight-lane y --saving <$M/yr> --part <LANE_ID> \
+  --label "<origin-destination>" --option "<the option they chose>"
+```
+If they pick "stay on spot", that is a real answer: record it with
+`--sign freight-lane n --part <LANE_ID> --label "..."`.
+
+**HUMAN-LED — `vave-ideation`.** Section is `FOR ENGINEERING JUDGEMENT`. This
+is the tier the field failure created, so lead with the risk and the test, not
+the saving:
+> "Idea V-014 on casting C-2004 — remove two ribs, $1.1M a year. But it is
+> load-bearing, and this is exactly the class of change that failed in the
+> field. Before it moves it needs a fatigue test to the part's rated load
+> cycles, about six weeks, owned by a structural engineer. If it's wrong, the
+> part fails under load in the field."
+
+AskUserQuestion, "Yes — send it for testing" / "No — don't pursue it". A yes
+here does NOT book a saving; it enters the ledger as Pending validation and
+earns nothing until the test passes. Record it WITH the test and the owner:
+```
+python cli.py --sign vave-ideation y --saving <$M/yr> --part <ID> \
+  --label "<short name>" --test "<the named test and how long>" --owner "<who signs>"
+```
+Never omit `--test` on this tier — the tool will call it out, and rightly.
+
+After each decision read out what the screen says: the booking id, and the
+booked run-rate. Point out explicitly when a human-led item does NOT move the
+run-rate: "that's approved, but it earns nothing until the test comes back."
+On a rejection say "that one does not enter the ledger."
 
 **4. ASK whether to move on to the next agent, and WAIT.** Use AskUserQuestion
 with "Next agent" and "Hold here" — e.g. "Move on to should-cost-analytics?".
@@ -178,11 +214,13 @@ Show what the human actually approved, and the ledger it built:
 ```
 python cli.py --signoff-record
 ```
-Read off the screen: "N/10 opportunities carry a human signature", then the
+Read off the screen: "N/8 opportunities carry a human signature", then the
 ledger total and what percent of the $36.5M target it is.
 
-Say: "Five agents, each reading the same data, each computing its own findings —
-and the only things in that ledger are the ones a human said yes to. That's
+Say: "Four agents, one per trust tier. The Super Agents asked me yes or no.
+The Utility agent refused to choose and made me pick. The Human-led one would
+not book a dollar until an engineer tests it. Same data, three different levels
+of trust — and nothing in that ledger that a human didn't sign. That's
 Intent-Driven Savings, and it all runs on Claude Code with no API key."
 
 ### Step 3 — OPTIONAL: the answer to the Grand Finale twist

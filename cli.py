@@ -188,14 +188,15 @@ LEDGER_HEADER = ["booking_id", "lever", "trust_type", "part_id",
 AGENT_LEVER = {
     "commodity-watch": "should_cost",
     "should-cost-analytics": "should_cost",
-    "vave-ideation": "subtier_teardown",
+    "vave-ideation": "design_to_value",
     "parts-commonization": "commonization",
+    "freight-lane": "freight_lane",
     "orchestrator": "should_cost",
     "savings-ledger": "should_cost",
 }
 
 
-def book_to_ledger(agent_name, saving_musd, part_id="-"):
+def book_to_ledger(agent_name, saving_musd, part_id="-", status="Booked"):
     """Append a human-approved finding to the cost ledger."""
     import csv, datetime
     lever = core.lever_by_id(AGENT_LEVER.get(agent_name, "should_cost"))
@@ -207,7 +208,7 @@ def book_to_ledger(agent_name, saving_musd, part_id="-"):
     with open(LEDGER, "a", encoding="utf-8", newline="") as f:
         csv.writer(f).writerow([
             booking_id, lever.name, lever.trust.value, part_id,
-            int(round(saving_musd * 1_000_000)), "Booked",
+            int(round(saving_musd * 1_000_000)), status,
             f"human sign-off ({agent_name})",
             datetime.date.today().isoformat(),
         ])
@@ -228,46 +229,87 @@ def show_ledger():
     if not rows:
         print(f"  {C.Y}(empty  -  nothing has been signed into it yet){C.END}\n")
         return
+    booked = [r for r in rows if r["status"] == "Booked"]
+    pending = [r for r in rows if r["status"] != "Booked"]
     for r in rows:
         musd = float(r["saving_usd_yr"]) / 1_000_000
-        print(f"  {C.G}{r['booking_id']}{C.END}  {r['lever']:<22} {C.BOLD}${musd:.1f}M/yr{C.END}"
-              f"  {C.DIM}{r['approved_by']}{C.END}")
-    total = sum(float(r["saving_usd_yr"]) for r in rows) / 1_000_000
-    pct = round(total / core.TARGET_ANNUAL_SAVING * 100)
-    print(f"\n  {C.G}{C.BOLD}Booked: ${total:.1f}M/yr{C.END} "
-          f"({pct}% of ${core.TARGET_ANNUAL_SAVING}M target)\n")
+        is_booked = r["status"] == "Booked"
+        mark = f"{C.G}{r['booking_id']}{C.END}" if is_booked else f"{C.Y}{r['booking_id']}{C.END}"
+        print(f"  {mark}  {r['lever']:<22} {C.BOLD}${musd:.1f}M/yr{C.END}  "
+              f"{'' if is_booked else C.Y + r['status'] + '  ' + C.END}"
+              f"{C.DIM}{r['part_id']}  {r['approved_by']}{C.END}")
+    tot_b = sum(float(r["saving_usd_yr"]) for r in booked) / 1_000_000
+    tot_p = sum(float(r["saving_usd_yr"]) for r in pending) / 1_000_000
+    pct = round(tot_b / core.TARGET_ANNUAL_SAVING * 100)
+    print(f"\n  {C.G}{C.BOLD}Booked run-rate: ${tot_b:.1f}M/yr{C.END} "
+          f"({pct}% of ${core.TARGET_ANNUAL_SAVING}M target)")
+    if pending:
+        print(f"  {C.Y}Approved but not yet counted: ${tot_p:.1f}M/yr{C.END} "
+              f"{C.DIM}-  {len(pending)} item(s) awaiting the engineering test that "
+              f"must pass first{C.END}")
+    print()
 
 
-def record_sign_off(agent_name, approved, saving_musd=0.0, part_id="-", label=""):
+def record_sign_off(agent_name, approved, saving_musd=0.0, part_id="-", label="",
+                    option="", test="", owner=""):
     """
     Record a human's decision on a live agent finding. Approved findings go
     into the cost ledger; rejected ones go nowhere. Kept in files so the
     decision survives between the separate commands that run and sign it.
     """
     import csv
+    trust = core.AGENT_TIER.get(agent_name, (core.Trust.SUPER_AGENT,))[0]
     what = label or part_id if (label or part_id != "-") else f"{agent_name}'s finding"
+    if option:
+        what = f"{what} [{option}]"
+
+    # Human-led is the tier the field failure created: a human can approve the
+    # idea, but it earns nothing until the named test comes back.
+    pending = trust == core.Trust.HUMAN_LED
+    status = "Pending validation" if pending else "Booked"
+
     new = not core._os.path.exists(SIGNOFF_LOG)
     with open(SIGNOFF_LOG, "a", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         if new:
-            w.writerow(["agent", "part_id", "label", "decision", "saving_musd"])
-        w.writerow([agent_name, part_id, label, "signed" if approved else "rejected",
-                    saving_musd if approved else 0.0])
+            w.writerow(["agent", "trust", "part_id", "label", "option",
+                        "decision", "saving_musd", "test", "owner"])
+        w.writerow([agent_name, trust.value, part_id, label, option,
+                    "signed" if approved else "rejected",
+                    saving_musd if approved else 0.0, test, owner])
 
-    if approved:
-        print(f"\n  {C.G}{C.BOLD}APPROVED{C.END}  {what} ({agent_name}), signed by a human.")
-        if saving_musd > 0:
-            bid = book_to_ledger(agent_name, saving_musd, part_id)
-            print(f"  -> booked into the cost ledger as {C.BOLD}{bid}{C.END}, "
-                  f"{C.G}{C.BOLD}${saving_musd:.1f}M/yr{C.END}")
-            total = sum(float(r["saving_usd_yr"]) for r in ledger_rows()) / 1_000_000
-            print(f"  {C.DIM}ledger now stands at ${total:.1f}M/yr of "
-                  f"${core.TARGET_ANNUAL_SAVING}M{C.END}\n")
-        else:
-            print(f"  {C.DIM}no dollar figure attached, so nothing was booked{C.END}\n")
-    else:
+    if not approved:
         print(f"\n  {C.R}{C.BOLD}REJECTED{C.END}  {what} ({agent_name}).")
         print(f"  {C.DIM}not booked  -  it does not enter the cost ledger{C.END}\n")
+        return
+
+    verb = "CHOSEN" if option else ("APPROVED, PENDING TEST" if pending else "APPROVED")
+    colour = C.Y if pending else C.G
+    print(f"\n  {colour}{C.BOLD}{verb}{C.END}  {what} ({agent_name}, {trust.value}).")
+
+    if pending:
+        print(f"  {C.DIM}Human-led: the engineer leads, so this earns nothing until "
+              f"the test passes.{C.END}")
+        if test:
+            print(f"  Test required: {C.BOLD}{test}{C.END}")
+        if owner:
+            print(f"  Owned by:      {C.BOLD}{owner}{C.END}")
+        if not test:
+            print(f"  {C.R}No test named  -  a human-led item without a named test is "
+                  f"not a plan.{C.END}")
+
+    if saving_musd > 0:
+        bid = book_to_ledger(agent_name, saving_musd, part_id, status)
+        where = "entered as PENDING VALIDATION" if pending else "booked into the cost ledger"
+        print(f"  -> {where} as {C.BOLD}{bid}{C.END}, "
+              f"{colour}{C.BOLD}${saving_musd:.1f}M/yr{C.END}")
+        rows = ledger_rows()
+        run_rate = sum(float(r["saving_usd_yr"]) for r in rows
+                       if r["status"] == "Booked") / 1_000_000
+        print(f"  {C.DIM}booked run-rate now ${run_rate:.1f}M/yr of "
+              f"${core.TARGET_ANNUAL_SAVING}M{C.END}\n")
+    else:
+        print(f"  {C.DIM}no dollar figure attached, so nothing was booked{C.END}\n")
 
 
 def show_signoff_record():
@@ -282,8 +324,15 @@ def show_signoff_record():
         ok = r["decision"] == "signed"
         what = r.get("label") or r.get("part_id") or ""
         what = "" if what == "-" else what
+        trust = r.get("trust", "")
+        colour = {"Super Agent": C.P, "Utility": C.B, "Human-led": C.Y}.get(trust, C.DIM)
         print(f"  {(C.G + '[x] signed  ' if ok else C.R + '[ ] rejected')}{C.END} "
-              f"{r['agent']:<24}{C.DIM}{what}{C.END}")
+              f"{colour}{trust:<12}{C.END}{r['agent']:<24}{C.DIM}{what}{C.END}")
+        if ok and r.get("option"):
+            print(f"  {'':>13}{C.DIM}chose: {r['option']}{C.END}")
+        if ok and r.get("test"):
+            print(f"  {'':>13}{C.Y}must pass: {r['test']}"
+                  f"{('  (' + r['owner'] + ')') if r.get('owner') else ''}{C.END}")
     n = sum(1 for r in rows if r["decision"] == "signed")
     print(f"\n  {C.BOLD}{n}/{len(rows)}{C.END} opportunities carry a human signature.")
     print(f"  {C.DIM}Nothing books without one  -  green = sign-off, every tier.{C.END}\n")
@@ -539,6 +588,12 @@ def main():
                     help="the part_id or idea_id this decision is about")
     ap.add_argument("--label", default="", metavar="TEXT",
                     help="short name for the opportunity being decided")
+    ap.add_argument("--option", default="", metavar="TEXT",
+                    help="Utility tier: which option the human chose, e.g. 'B index-linked'")
+    ap.add_argument("--test", default="", metavar="TEXT",
+                    help="Human-led tier: the validation that must pass before this counts")
+    ap.add_argument("--owner", default="", metavar="TEXT",
+                    help="Human-led tier: the engineer or function that owns the test")
     ap.add_argument("--signoff-record", action="store_true", help="show every sign-off decision so far")
     ap.add_argument("--ledger", action="store_true", help="show the cost ledger of approved savings")
     ap.add_argument("--plan", action="store_true",
@@ -577,7 +632,8 @@ def main():
             print(f"Unknown agent. Options: {', '.join(AGENT_PROMPTS)}"); sys.exit(1)
         if decision not in ("y", "n", "yes", "no"):
             print(f"Answer must be y or n, got {args.sign[1]!r}"); sys.exit(1)
-        record_sign_off(name, decision.startswith("y"), args.saving, args.part, args.label)
+        record_sign_off(name, decision.startswith("y"), args.saving, args.part,
+                        args.label, args.option, args.test, args.owner)
         sys.exit(0)
 
     if args.data:
@@ -589,6 +645,7 @@ def main():
             ("warranty_claims.csv", "warranty claim groups by part"),
             ("teardown_ideas.csv", "raw VAVE ideas from competitor teardowns"),
             ("commodity_prices.csv", "steel/rubber/alloy price indices"),
+            ("freight_lanes.csv", "6 ocean lanes, ~$18M/yr, option rates per lane"),
             ("category_rates.csv", "the case's own commercial + VAVE % per category"),
             ("indirect_opportunities.csv", "indirect: ~$100M/yr, freight to facilities"),
             ("savings_ledger.csv", "booked savings (starts empty)"),

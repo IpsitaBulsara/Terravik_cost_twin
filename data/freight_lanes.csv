@@ -1,0 +1,7 @@
+lane_id,origin,destination,annual_spend_usd,teu_per_year,current_mode,fixed_contract_saving_pct,index_linked_saving_pct,consolidation_saving_pct,transit_days,on_time_pct,single_carrier
+L-01,Chennai,Rotterdam,5200000,2600,spot,0.09,0.06,0.04,28,82,no
+L-02,Mundra,Hamburg,4100000,2050,spot,0.08,0.05,0.035,30,79,no
+L-03,Chennai,Savannah,3400000,1500,spot,0.07,0.05,0.03,34,75,yes
+L-04,Pipavav,Santos,2300000,1000,spot,0.06,0.04,0.025,38,71,yes
+L-05,Mundra,Durban,1600000,800,contract,0.02,0.015,0.02,22,88,no
+L-06,Chennai,Sydney,1400000,620,spot,0.07,0.045,0.03,26,84,no
